@@ -1,13 +1,13 @@
 # yaml-language-server: $schema=./schemas/business-spec.schema.json
 #
-# Domain contract for noddle draw — written against the code as it actually
+# Domain contract for AI Meeting Draw — written against the code as it actually
 # behaves (contract-first adoption, 2026-08-16), not against an intended
 # redesign. Anything aspirational belongs in architecture.yaml#decisions.
 #
-# noddle draw is a PUBLIC, MIT-licensed, English-only repo. Nothing private
+# AI Meeting Draw is a PUBLIC, MIT-licensed, English-only repo. Nothing private
 # (credentials, other products' internals) may appear in this file.
 meta:
-  name: noddle draw
+  name: AI Meeting Draw
   version: "1.0"
   updated: "2026-08-16"
   purpose: >-
@@ -24,7 +24,7 @@ actors:
       Anyone holding a board URL. There are no accounts, sessions, teams or
       billing — every caller is the single shared GUEST principal
       (backend/app/services/auth.py). A display identity (name + color) is
-      auto-generated client-side into localStorage["noddle-user"] and rides
+      auto-generated client-side into localStorage["ai-meeting-draw-user"] and rides
       collab presence, comments and save attribution; it is cosmetic, never
       authorization.
     can: [create_board, view_board, edit_board, rename_board, export_svg,
@@ -44,12 +44,12 @@ identity:
     can(action, meta.link_policy). No JWT, no cookie, no session.
   membership_ssot: DocumentMeta.link_policy, per board
   client_identity: >-
-    localStorage["noddle-user"] (display name + color, renameable in the
-    Share dialog) and localStorage["noddle.clientId"] (opaque UUID bucketing
+    localStorage["ai-meeting-draw-user"] (display name + color, renameable in the
+    Share dialog) and localStorage["ai-meeting-draw.clientId"] (opaque UUID bucketing
     AI job history via the X-Client-Id header). Neither is a credential.
   recents: >-
-    Board discovery is client-side only — noddle.lastBoardId and
-    noddle.recentBoards in localStorage. The server deliberately has no
+    Board discovery is client-side only — ai-meeting-draw.lastBoardId and
+    ai-meeting-draw.recentBoards in localStorage. The server deliberately has no
     listing endpoint (link access is not discovery).
   dev_fallback: none — local dev is identical to production (anonymous)
 
@@ -97,7 +97,7 @@ flows:
   open_or_mint:
     trigger: A visitor opens / (or any unknown path).
     steps:
-      - The SPA reopens localStorage noddle.lastBoardId when it is still
+      - The SPA reopens localStorage ai-meeting-draw.lastBoardId when it is still
         alive, else POSTs /api/documents/new for a fresh blank board and
         history.replaceState()s to /d/{id}.
       - A stale own lastBoardId heals silently by minting a new board; a
@@ -134,7 +134,7 @@ flows:
     trigger: A guest sends a chat instruction with mode "edit" (the default).
     steps:
       - The browser sends X-AI-Provider/X-AI-Key/X-AI-Model/X-AI-Base headers
-        from localStorage["noddle.aiKey"] — BYOK is per-request; the server
+        from localStorage["ai-meeting-draw.aiKey"] — BYOK is per-request; the server
         never stores or logs the key.
       - No key → fallback chain — the shared Databricks pool when configured,
         else the FreePool (OpenRouter free models behind per-IP limits, a

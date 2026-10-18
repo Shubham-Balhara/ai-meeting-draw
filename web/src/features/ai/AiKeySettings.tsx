@@ -2,7 +2,7 @@
  * features/ai/AiKeySettings — the client-side BYOK modal.
  *
  * The provider/key/model live ONLY in this browser's localStorage
- * ("noddle.aiKey") and ride each AI request as X-AI-* headers — the server
+ * ("ai-meeting-draw.aiKey") and ride each AI request as X-AI-* headers — the server
  * proxies the call and never stores the key (Excalidraw-style BYOK for an
  * account-less product).
  */

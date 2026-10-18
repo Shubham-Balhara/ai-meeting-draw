@@ -263,7 +263,7 @@ function NodeProps({ id }: { id: string }) {
 
       <div className="ask-claude" onClick={() => setRightTab("claude")}>
         <span className="spark">✦</span>
-        <span className="txt">Ask AI-Noddle about this shape →</span>
+        <span className="txt">Ask AI Meeting Draw about this shape →</span>
       </div>
     </div>
   );
@@ -396,7 +396,7 @@ function EdgeProps({ id }: { id: string }) {
       <button className="btn btn-danger btn-block" style={{ margin: "8px 0 14px" }} onClick={deleteSelected}>✕ Delete connector</button>
       <div className="ask-claude" onClick={() => setRightTab("claude")}>
         <span className="spark">✦</span>
-        <span className="txt">Ask AI-Noddle to re-route this →</span>
+        <span className="txt">Ask AI Meeting Draw to re-route this →</span>
       </div>
     </div>
   );

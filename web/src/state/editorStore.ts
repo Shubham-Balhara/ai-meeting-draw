@@ -73,7 +73,7 @@ export type StatusKind = "" | "ok" | "error";
 // Key is (board, page): every page keeps its own view. The old per-board key
 // remains as a read fallback so pre-existing saved views still restore once.
 const CAM_KEY = (docId: string, pageId?: string | null) =>
-  pageId ? `noddle:cam:${docId}:${pageId}` : `noddle:cam:${docId}`;
+  pageId ? `ai-meeting-draw:cam:${docId}:${pageId}` : `ai-meeting-draw:cam:${docId}`;
 let _camSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
 function writeCam(docId: string, pageId: string | null, cam: Camera): void {
@@ -318,7 +318,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
   penStyle: (() => {
     try {
-      return { stroke: "#2d3142", strokeWidth: 2, brush: { ...DEFAULT_BRUSH }, ...JSON.parse(localStorage.getItem("noddle-pen-style") ?? "{}") };
+      return { stroke: "#2d3142", strokeWidth: 2, brush: { ...DEFAULT_BRUSH }, ...JSON.parse(localStorage.getItem("ai-meeting-draw-pen-style") ?? "{}") };
     } catch {
       return { stroke: "#2d3142", strokeWidth: 2, brush: { ...DEFAULT_BRUSH } };
     }
@@ -327,7 +327,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const next = { ...get().penStyle, ...patch };
     if (next.opacity === undefined || next.opacity >= 1) delete next.opacity;
     try {
-      localStorage.setItem("noddle-pen-style", JSON.stringify(next));
+      localStorage.setItem("ai-meeting-draw-pen-style", JSON.stringify(next));
     } catch {
       /* private mode */
     }
@@ -345,7 +345,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
   edgeStyle: (() => {
     try {
-      return JSON.parse(localStorage.getItem("noddle-edge-style") ?? "{}");
+      return JSON.parse(localStorage.getItem("ai-meeting-draw-edge-style") ?? "{}");
     } catch {
       return {};
     }
@@ -363,7 +363,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       else (next as Record<string, unknown>)[k] = v;
     }
     try {
-      localStorage.setItem("noddle-edge-style", JSON.stringify(next));
+      localStorage.setItem("ai-meeting-draw-edge-style", JSON.stringify(next));
     } catch {
       /* private mode */
     }
@@ -372,7 +372,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   drawStyle: (() => {
     try {
-      return JSON.parse(localStorage.getItem("noddle-draw-style") ?? "{}");
+      return JSON.parse(localStorage.getItem("ai-meeting-draw-style") ?? "{}");
     } catch {
       return {};
     }
@@ -385,7 +385,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       else (next as Record<string, unknown>)[k] = v;
     }
     try {
-      localStorage.setItem("noddle-draw-style", JSON.stringify(next));
+      localStorage.setItem("ai-meeting-draw-style", JSON.stringify(next));
     } catch {
       /* private mode */
     }
@@ -568,7 +568,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     // Content WITHOUT any previously-baked diagram render (see below) — else
     // every save would accumulate another flattened copy.
     const contentClone = refs.content.cloneNode(true) as SVGGElement;
-    contentClone.querySelector("#noddle-diagram-baked")?.remove();
+    contentClone.querySelector("#ai-meeting-draw-diagram-baked")?.remove();
     // The diagram layer is live SVG DOM rendered by React inside the same
     // camera group — clone it, strip editor-only chrome (ports, halos,
     // selection boxes, previews), and mark it as the BAKED render so openDoc
@@ -578,7 +578,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const layer = parent?.querySelector("#diagram-layer");
     if (layer) {
       const clone = layer.cloneNode(true) as Element;
-      clone.setAttribute("id", "noddle-diagram-baked");
+      clone.setAttribute("id", "ai-meeting-draw-diagram-baked");
       clone.querySelectorAll("[data-editor-only]").forEach((el) => el.remove());
       // Flow-style dash patterns live in CSS — CSS never travels with
       // serialized markup, so bake them inline for export/preview parity,
@@ -673,7 +673,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       if (hasDiagram) {
         // Drop the baked (flattened) render from the SVG — the live editable
         // diagram replaces it; keeping both doubles every shape.
-        get().refs?.content.querySelector("#noddle-diagram-baked")?.remove();
+        get().refs?.content.querySelector("#ai-meeting-draw-diagram-baked")?.remove();
         get().bumpContent();
         usePagesStore.getState().loadFromPayload(payload, id);
       } else {

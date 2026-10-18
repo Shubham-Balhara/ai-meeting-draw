@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**noddle** — open-source ANONYMOUS diagram board (React SPA + FastAPI), live at
-draw.noddle.dev. Excalidraw model: no accounts, no login — visiting `/` opens
+**AI Meeting Draw** — open-source ANONYMOUS diagram board (React SPA + FastAPI), live at
+the configured deployment. Excalidraw model: no accounts, no login — visiting `/` opens
 your most recent board (or mints one); the board URL is the sharing
 capability. Live collaboration, anonymous comments, and a BYOK AI co-editor
 whose key lives client-side.
 
 ```
-noddle/
+AI Meeting Draw/
 ├── backend/   FastAPI (clean architecture: api → services → domain,
 │              infrastructure adapters: Postgres via psycopg OR plain files)
 ├── web/       React + TypeScript (Vite) SPA
@@ -51,9 +51,9 @@ There is no Python linter/formatter config checked in; match surrounding style.
 - Every board created through the API is `link_policy="edit"` — the URL is the
   capability. There is NO board listing endpoint (link access ≠ discovery),
   no DELETE, no policy toggle: nobody is more trusted than anyone else with
-  the link. Recents live in the browser (`noddle.lastBoardId`,
-  `noddle.recentBoards` in localStorage).
-- Client identity is auto-generated into `localStorage["noddle-user"]`
+  the link. Recents live in the browser (`ai-meeting-draw.lastBoardId`,
+  `ai-meeting-draw.recentBoards` in localStorage).
+- Client identity is auto-generated into `localStorage["ai-meeting-draw-user"]`
   (`collabStore.getIdentity()`), renameable in the Share dialog; it rides
   collab `hello`, comments (`guest_name`/`guest_color`) and save attribution
   (`SaveBody.author_name`).
@@ -72,7 +72,7 @@ There is no Python linter/formatter config checked in; match surrounding style.
 
 ### AI / BYOK (client-side keys)
 - BYOK is PER-REQUEST: the browser keeps `{provider,key,model,base}` in
-  `localStorage["noddle.aiKey"]` and sends `X-AI-Provider/X-AI-Key/X-AI-Model/
+  `localStorage["ai-meeting-draw.aiKey"]` and sends `X-AI-Provider/X-AI-Key/X-AI-Model/
   X-AI-Base` headers; `api/ai.py::_resolve_backend` validates them
   (provider ∈ `AI_PROVIDERS` in `services/ai.py`; `openrouter` is a preset
   base+model, `custom` needs `X-AI-Base`). The server never stores or logs the
@@ -88,7 +88,7 @@ There is no Python linter/formatter config checked in; match surrounding style.
   applied, so edits made while it works survive. Don't regress to
   replace-the-board.
 - Background image→board jobs are bucketed by `X-Client-Id` (an opaque UUID in
-  `localStorage["noddle.clientId"]`); finished jobs create ordinary anonymous
+  `localStorage["ai-meeting-draw.clientId"]`); finished jobs create ordinary anonymous
   boards. `GET /api/config` → `{"pool_ai": bool, "turnstile_site_key":
   str|null}` (`pool_ai` covers Databricks OR FreePool) drives the frontend's
   backend picker (`features/ai/BackendSelect` + `AiKeySettings`,
@@ -100,14 +100,14 @@ There is no Python linter/formatter config checked in; match surrounding style.
   routing, perimeters, mermaid, shape defs). Keep it framework-free.
 - Two views only (`appStore.view`): `editor` and `generate`. `applyLocation()`
   maps URLs — `/d/{id}`, `/embed/{id}`, `/generate`, everything else →
-  `bootHome()` (reopen `noddle.lastBoardId` or `api.create` a fresh board,
+  `bootHome()` (reopen `ai-meeting-draw.lastBoardId` or `api.create` a fresh board,
   with `history.replaceState`). `editorStore.openDoc` heals a stale
   lastBoardId by minting a new board; a foreign dead link shows the
   `notFound` screen.
 - Editor chrome = the Excalidraw-style floating islands in
   `features/editor/SimpleMode.tsx` (`.editor.simple` CSS) — the ONLY editor
   UI; the old docked "Full" layout, its topbar/status bar and the Full|Simple
-  switch are gone (a stale `noddle-ui-mode` localStorage key is ignored).
+  switch are gone (a stale `ai-meeting-draw-ui-mode` localStorage key is ignored).
   ☰ File menu = `SimpleFileMenu.tsx`, left style panel = `DrawStylePanel.tsx`,
   floating Properties/AI panel = `appStore.simplePanelOpen`, Library browser
   = `features/library/` (`L`), `?` = `ShortcutsDialog.tsx` (hand-kept key

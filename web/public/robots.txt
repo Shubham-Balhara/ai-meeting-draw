@@ -1,5 +1,3 @@
 User-agent: *
 Allow: /
 Disallow: /api/
-
-Sitemap: https://draw.noddle.dev/sitemap.xml

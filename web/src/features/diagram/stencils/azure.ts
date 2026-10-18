@@ -1,7 +1,7 @@
 /**
  * features/diagram/stencils/azure — Azure stencil glyphs.
  *
- * ⚠️ LICENSING: ORIGINAL pictograms drawn for noddle — NOT Microsoft artwork and
+ * ⚠️ LICENSING: ORIGINAL pictograms drawn for AI Meeting Draw — NOT Microsoft artwork and
  * no official path data. They only borrow the general *style language* of the
  * Azure architecture icon family (flat filled shapes, vertical blue gradients,
  * 2–3 tone layering, white highlight sub-shapes) so an Azure board reads at a

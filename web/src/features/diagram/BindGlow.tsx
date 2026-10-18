@@ -9,7 +9,7 @@ import type { DiagramNode } from "../../editor-core/diagram";
 import { shapeElement } from "./ShapePalette";
 
 /** Shared blur filter id (defined once in DiagramLayer's <defs>). */
-export const BIND_GLOW_FILTER = "noddle-bind-glow";
+export const BIND_GLOW_FILTER = "ai-meeting-draw-bind-glow";
 const GLOW = "#8b85f0";
 
 export function BindGlow({ node, strong = false }: { node: DiagramNode; strong?: boolean }) {

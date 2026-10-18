@@ -5,7 +5,7 @@
  * SVG passes through it. This exists ONLY for the offline upload fallback
  * (backend unreachable → open a local file), where raw file text would
  * otherwise be injected straight into the live DOM. Without it, an
- * attacker-supplied .svg opened offline could run script in noddle's origin and
+ * attacker-supplied .svg opened offline could run script in AI Meeting Draw's origin and
  * read the BYOK key from localStorage. Deny-list of the active vectors:
  * <script>/<foreignObject>, on* handlers, and javascript: URLs.
  */

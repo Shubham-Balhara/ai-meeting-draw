@@ -1,6 +1,6 @@
 /**
  * features/editor/Presence — avatars of everyone in the live-collab room,
- * plus AI-Noddle as a permanent co-editor (pulses while it edits).
+ * plus AI Meeting Draw as a permanent co-editor (pulses while it edits).
  */
 import { useCollabStore, getIdentity } from "../../state/collabStore";
 import { useAppStore } from "../../state/appStore";
@@ -33,10 +33,10 @@ export function Presence() {
       {list.length > 6 && (
         <span className="avatar" style={{ background: "var(--faint)" }}>+{list.length - 6}</span>
       )}
-      {/* AI-Noddle — always in the room as a co-editor; pulses while editing */}
+      {/* AI Meeting Draw — always in the room as a co-editor; pulses while editing */}
       <span
         className={`avatar claude${aiThinking ? " thinking" : ""}`}
-        title={aiThinking ? "AI-Noddle is editing the diagram…" : "AI-Noddle — co-editor (chat to ask for edits)"}
+        title={aiThinking ? "AI Meeting Draw is editing the diagram…" : "AI Meeting Draw — co-editor (chat to ask for edits)"}
         style={{ background: "var(--grad)" }}
       >
         ✦

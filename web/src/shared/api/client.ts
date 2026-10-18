@@ -13,8 +13,8 @@
  * prod the FastAPI app serves web/dist same-origin, so the base is "".
  *
  * AI endpoints use CLIENT-SIDE BYOK: the provider/key/model live in
- * localStorage ("noddle.aiKey") and ride each request as X-AI-* headers — the
- * server proxies the call and never stores the key. "noddle.clientId" is an
+ * localStorage ("ai-meeting-draw.aiKey") and ride each request as X-AI-* headers — the
+ * server proxies the call and never stores the key. "ai-meeting-draw.clientId" is an
  * opaque UUID identifying this browser's AI-job history (X-Client-Id).
  */
 import type { DiagramEdge, DiagramNode } from "../../editor-core/diagram";
@@ -91,7 +91,7 @@ export interface ImageToSvgOut {
   svg: string;
 }
 
-/** Response of POST /api/ai/text-to-diagram — noddle's native diagram model. */
+/** Response of POST /api/ai/text-to-diagram — AI Meeting Draw's native diagram model. */
 export interface TextToDiagramOut {
   nodes: DiagramNode[];
   edges: DiagramEdge[];
@@ -114,7 +114,7 @@ export interface AiJobOut {
 
 export type AiProvider = "claude" | "openai" | "gemini" | "openrouter" | "custom";
 
-/** The browser-kept BYOK config (localStorage "noddle.aiKey"). */
+/** The browser-kept BYOK config (localStorage "ai-meeting-draw.aiKey"). */
 export interface AiKeyConfig {
   provider: AiProvider;
   key: string;
@@ -124,8 +124,8 @@ export interface AiKeyConfig {
   base: string;
 }
 
-const AI_KEY_STORAGE = "noddle.aiKey";
-const CLIENT_ID_STORAGE = "noddle.clientId";
+const AI_KEY_STORAGE = "ai-meeting-draw.aiKey";
+const CLIENT_ID_STORAGE = "ai-meeting-draw.clientId";
 
 /** The stored BYOK config, or null (never throws — storage may be blocked). */
 export function getAiKeyConfig(): AiKeyConfig | null {
@@ -428,7 +428,7 @@ export const api = {
   },
 
   /**
-   * AI: turn free text or a Mermaid definition into noddle diagram nodes/edges.
+   * AI: turn free text or a Mermaid definition into AI Meeting Draw diagram nodes/edges.
    * Non-2xx throws an ApiError carrying the server's `detail` message.
    */
   async textToDiagram(

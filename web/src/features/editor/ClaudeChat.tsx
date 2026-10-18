@@ -176,7 +176,7 @@ export function ClaudeChat() {
           <div className="chat-empty">
             <span className="chat-empty-mark" aria-hidden="true">✦</span>
             <div className="chat-empty-title">
-              {chatMode === "ask" ? "Ask about this board" : "Draw with AI-Noddle"}
+              {chatMode === "ask" ? "Ask about this board" : "Draw with AI Meeting Draw"}
             </div>
             <div className="chat-empty-sub">
               {chatMode === "ask"
@@ -257,7 +257,7 @@ export function ClaudeChat() {
                 ? "Keep typing — messages queue up…"
                 : chatMode === "ask"
                   ? "Ask anything — the board is context, not edited…"
-                  : "Ask AI-Noddle to edit the diagram…"
+                  : "Ask AI Meeting Draw to edit the diagram…"
             }
             title="Enter to send · Shift+Enter for a new line · paste an image with ⌘V/Ctrl+V"
             // auto-grow up to the CSS max-height, then scroll

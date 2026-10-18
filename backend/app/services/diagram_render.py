@@ -8,7 +8,7 @@ but faithful SVG straight from the diagram JSON so previews are never blank.
 
 The shapes are approximate (rounded rect / ellipse / diamond / triangle + a
 centered label + straight connector lines) — enough for a recognizable card
-thumbnail. Output is wrapped in ``<g id="noddle-diagram-baked">`` so that when
+thumbnail. Output is wrapped in ``<g id="ai-meeting-draw-diagram-baked">`` so that when
 such a document is opened in the editor, ``openDoc`` strips this group and
 re-renders the live diagram from JSON (no doubled shapes) — matching the
 existing board persistence convention.
@@ -148,5 +148,5 @@ def diagram_to_svg(diagram: dict) -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" '
         f'viewBox="0 0 {_ARTBOARD_W} {_ARTBOARD_H}" '
         f'width="{_ARTBOARD_W}" height="{_ARTBOARD_H}">'
-        f'<g id="noddle-diagram-baked">{inner}</g></svg>'
+        f'<g id="ai-meeting-draw-diagram-baked">{inner}</g></svg>'
     )

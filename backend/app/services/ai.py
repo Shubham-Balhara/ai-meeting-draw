@@ -8,7 +8,7 @@ endpoint (``{host}/serving-endpoints/{endpoint}/invocations``):
     single clean, editable SVG. Output is run through the same whitelist
     ``sanitize_svg`` used for user uploads before it leaves the service.
   * ``text_to_diagram`` — Claude turns free text or a Mermaid flowchart into
-    noddle's editable node/edge diagram JSON (asked for as strict JSON, parsed
+    AI Meeting Draw's editable node/edge diagram JSON (asked for as strict JSON, parsed
     and validated with Pydantic).
 
 Transport is **stdlib urllib** on purpose: Databricks Model Serving is not an
@@ -66,7 +66,7 @@ DEFAULT_ENDPOINT = "databricks-claude-opus-4-8"
 # A real product User-Agent — urllib's default "Python-urllib/3.x" is a known
 # scraper signature that Cloudflare-fronted APIs (e.g. Groq) reject with a 403
 # "error code: 1010", so every valid BYOK key otherwise failed.
-_USER_AGENT = "noddle-draw/1.0 (+https://draw.noddle.dev)"
+_USER_AGENT = "ai-meeting-draw/1.0"
 
 _HTTP_TIMEOUT = 150  # seconds per request — edit-diagram on a big board is slow
 # image→SVG asks for up to 8000 output tokens; slower models (full-size Claude,
@@ -703,8 +703,8 @@ class AIService:
                         f"{OPENROUTER_BASE}/chat/completions",
                         {
                             "Authorization": f"Bearer {key}",
-                            "HTTP-Referer": "https://draw.noddle.dev",
-                            "X-Title": "noddle draw",
+                            "HTTP-Referer": "http://127.0.0.1:8000",
+                            "X-Title": "AI Meeting Draw",
                         },
                         chain[0],
                         messages,
@@ -1026,7 +1026,7 @@ class AIService:
     ) -> dict:
         """Vision → EDITABLE diagram JSON built from the predefined shapes.
 
-        The image→board flow must produce real noddle nodes/edges (rect/
+        The image→board flow must produce real AI Meeting Draw nodes/edges (rect/
         rounded/ellipse/diamond, editable like text→diagram) — NOT a freeform
         SVG reproduction (raw ``<path>`` soup can't be restyled, connected or
         co-edited). Same structured-output pipeline as ``text_to_diagram``.
@@ -1064,7 +1064,7 @@ class AIService:
     def text_to_diagram(
         self, text: str, fmt: str, settings: ProviderSettings | None = None
     ) -> dict:
-        """Turn free text or a Mermaid flowchart into noddle diagram JSON."""
+        """Turn free text or a Mermaid flowchart into AI Meeting Draw diagram JSON."""
         if fmt == "mermaid":
             intro = (
                 "The input below is Mermaid flowchart syntax. Convert it into an "
@@ -1137,7 +1137,7 @@ class AIService:
             separators=(",", ":"),
         )
         prompt = (
-            "You are Claude — a live co-editor inside noddle, a collaborative "
+            "You are Claude — a live co-editor inside AI Meeting Draw, a collaborative "
             "diagram board. Apply the user's instruction to the CURRENT diagram "
             "and return the FULL updated diagram. Other humans are editing the "
             "same board live, so touch ONLY what the instruction asks for.\n"
@@ -1299,7 +1299,7 @@ class AIService:
         )
         prompt = (
             "You are Claude — a senior software architect and technical "
-            "consultant embedded in noddle, a collaborative diagram board. "
+            "consultant embedded in AI Meeting Draw, a collaborative diagram board. "
             "The user is ASKING, not editing: do not change the board. Use "
             "the CURRENT diagram JSON below as context when relevant "
             "(architecture reviews, best practices, missing components, "

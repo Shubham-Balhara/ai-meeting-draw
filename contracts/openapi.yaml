@@ -1,13 +1,13 @@
 openapi: 3.1.0
 info:
-  title: noddle draw API
+  title: AI Meeting Draw API
   version: "1.0"
   description: >-
     Contract is the SSOT — backend DTOs (backend/app/api/schemas.py,
     ai_schemas.py) and the frontend diagram types
     (web/src/editor-core/diagram/types.ts) mirror this file.
 
-    IDENTITY: there is none. noddle draw is anonymous-only (Excalidraw
+    IDENTITY: there is none. AI Meeting Draw is anonymous-only (Excalidraw
     semantics) — the board URL is the capability, and authorization reduces
     to the document's link_policy (see business-spec.yaml#link_policy).
     The only header-borne values are the per-request BYOK AI settings
@@ -16,7 +16,7 @@ info:
 servers:
   - url: http://localhost:8000
     description: local (uvicorn or docker compose; SPA served same-origin)
-  - url: https://draw.noddle.dev
+  - url: http://127.0.0.1:8000
     description: production
 tags:
   - name: documents
@@ -27,6 +27,8 @@ tags:
     description: BYOK AI co-editor (per-request keys, pool fallback)
   - name: system
     description: Config flags and liveness
+  - name: meetings
+    description: Audio ingestion, transcript persistence and meeting intelligence
 security: []   # anonymous product — no operation carries a security requirement
 
 # ---- WebSocket (not an HTTP operation; documented here so the wire protocol
@@ -113,7 +115,7 @@ paths:
       summary: Import a draw.io/diagrams.net file as a new editable board
       description: >-
         Accepts .drawio/.xml (plain or deflate+base64 mxfile; multi-page maps
-        to noddle pages). Mermaid .mmd is handled client-side via the AI
+        to AI Meeting Draw pages). Mermaid .mmd is handled client-side via the AI
         text→diagram path.
       requestBody:
         required: true
@@ -505,6 +507,33 @@ paths:
                 properties:
                   status: { type: string }
                   version: { type: string }
+  /api/meetings/health:
+    get:
+      operationId: getMeetingHealth
+      tags: [meetings]
+      summary: Meeting pipeline configuration and readiness metadata
+      responses:
+        "200":
+          description: Configured STT, intelligence provider and SQLite path
+          content:
+            application/json:
+              schema: { type: object }
+  /api/meetings/{session_id}:
+    get:
+      operationId: getMeeting
+      tags: [meetings]
+      summary: Persisted meeting metadata and ordered transcript segments
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Meeting state, or status=not_found
+          content:
+            application/json:
+              schema: { type: object }
 
 components:
   securitySchemes:

@@ -1,0 +1,11 @@
+{
+  "corpus_version": "1.0",
+  "created_at": "2026-10-18",
+  "domain": "software-system-design",
+  "corpus_file": "meeting-intelligence-eval.v1.jsonl",
+  "case_count": 18,
+  "sha256": "4098f4e3b93ebde294cfb6d21fcf2736b0a5897fc7afeb3673342f280d903606",
+  "prompt_version": "architecture-agent-v1",
+  "schema_version": "meeting-insight-v1",
+  "notes": "Synthetic, non-PII Phase 0 corpus. Gold concepts are evaluator identities, not required model semantic keys."
+}

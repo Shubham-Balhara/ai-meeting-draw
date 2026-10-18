@@ -18,7 +18,7 @@ import { pauseHistory, switchHistoryPage } from "./diagramHistory";
 
 // --- per-board "last active page" (restored on reload) -----------------------
 let currentDocId: string | null = null;
-const PAGE_KEY = (docId: string) => `noddle:page:${docId}`;
+const PAGE_KEY = (docId: string) => `ai-meeting-draw:page:${docId}`;
 function rememberActive(id: string | null): void {
   if (!currentDocId || !id) return;
   try {

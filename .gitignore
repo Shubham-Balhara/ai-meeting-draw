@@ -7,13 +7,37 @@
 .venv/
 __pycache__/
 *.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # node / vite
 node_modules/
 dist/
 
-# noddle local storage — user data, never commit
+# AI Meeting Draw local storage — user data, never commit
 backend/storage/
+backend/data/
+backend/recordings/
+backend/transcripts/
+*.sqlite
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+*.db
+*.db-shm
+*.db-wal
+*.webm
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.log
+
+# locally exported meeting artifacts
+transcripts/
+recordings/
+meeting-exports/
 
 # tooling / OS
 .omc/

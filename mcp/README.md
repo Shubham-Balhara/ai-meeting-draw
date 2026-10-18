@@ -1,15 +1,15 @@
-# noddle draw MCP server
+# AI Meeting Draw MCP server
 
-<!-- mcp-name: dev.noddle/draw -->
+<!-- mcp-name: ai-meeting-draw -->
 
 Lets an AI agent (Claude Code, Claude Desktop, or any MCP client) **work on a board
 alongside you**: read, create and edit boards, browse version history, and comment like
 any other collaborator.
 
-noddle draw is **anonymous**. There are no accounts and no tokens. A board id (12 hex
+AI Meeting Draw is **anonymous**. There are no accounts and no tokens. A board id (12 hex
 chars) or a board URL is the capability. The agent can open any board you give it, and
 anyone holding the link of a board the agent creates can open it too. The agent signs its
-comments and version snapshots with `NODDLE_AGENT_NAME`.
+comments and version snapshots with `AI_MEETING_DRAW_AGENT_NAME`.
 
 - **Stdlib-only** Python ≥ 3.9 (`urllib` + `json`), so there is nothing to install.
 - **stdio transport**: one JSON-RPC 2.0 message per line. stdout carries only protocol
@@ -30,9 +30,8 @@ comments and version snapshots with `NODDLE_AGENT_NAME`.
 **Claude Code** (from the repo root; an absolute script path is more robust):
 
 ```bash
-claude mcp add noddle -- python3 mcp/noddle_mcp.py
-# a self-hosted instance instead of draw.noddle.dev:
-claude mcp add noddle --env NODDLE_BASE_URL=http://127.0.0.1:8000 -- python3 mcp/noddle_mcp.py
+claude mcp add ai-meeting-draw -- python3 mcp/ai_meeting_draw_mcp.py
+claude mcp add ai-meeting-draw --env AI_MEETING_DRAW_BASE_URL=http://127.0.0.1:8000 -- python3 mcp/ai_meeting_draw_mcp.py
 ```
 
 **Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`)
@@ -41,38 +40,38 @@ or a project `.mcp.json` use the same shape:
 ```json
 {
   "mcpServers": {
-    "noddle": {
+    "ai-meeting-draw": {
       "command": "python3",
-      "args": ["/absolute/path/to/noddle-draw/mcp/noddle_mcp.py"],
-      "env": { "NODDLE_BASE_URL": "https://draw.noddle.dev" }
+      "args": ["/absolute/path/to/ai-meeting-draw/mcp/ai_meeting_draw_mcp.py"],
+      "env": { "AI_MEETING_DRAW_BASE_URL": "http://127.0.0.1:8000" }
     }
   }
 }
 ```
 
 **MCP Bundle** (one-click install in Claude Desktop and other MCPB clients): download
-`noddle-draw.mcpb` from the [latest `mcpb-v*` release](https://github.com/noddle-dev/noddle-draw/releases)
+`ai-meeting-draw.mcpb` from this repository's latest `mcpb-v*` release
 and open it. It needs only Python 3.10+ (standard library, no install step).
 
 **From a checkout** (`pyproject.toml` here):
 
 ```bash
-uvx --from ./mcp noddle-draw-mcp       # or: pipx install ./mcp && noddle-draw-mcp
+uvx --from ./mcp ai-meeting-draw-mcp       # or: pipx install ./mcp && ai-meeting-draw-mcp
 ```
 
 The server is listed in the [official MCP Registry](https://registry.modelcontextprotocol.io)
-as `dev.noddle/draw` (see [Releasing](#releasing)).
+as `ai-meeting-draw` (see [Releasing](#releasing)).
 
 | Env | Default | |
 |---|---|---|
-| `NODDLE_BASE_URL` | `https://draw.noddle.dev` | http(s) origin of the noddle draw instance. A non-http(s) value exits with code 2 |
-| `NODDLE_AGENT_NAME` | `MCP agent` | display name on comments and version history (max 40 chars) |
-| `NODDLE_TIMEOUT` | `30` | seconds per board API call |
-| `NODDLE_AI_TIMEOUT` | `180` | seconds for `generate_diagram` |
-| `NODDLE_AI_PROVIDER` | — | optional BYOK for `generate_diagram`: `claude`, `openai`, `gemini`, `openrouter` or `custom` |
-| `NODDLE_AI_KEY` | — | your AI provider key. It is sent only to `NODDLE_BASE_URL`, as the same `X-AI-*` headers the web app uses, and never stored. Unset means the instance's shared pool is used, if it has one |
-| `NODDLE_AI_MODEL` | — | optional model override |
-| `NODDLE_AI_BASE` | — | OpenAI-compatible base URL (provider `custom` only) |
+| `AI_MEETING_DRAW_BASE_URL` | `http://127.0.0.1:8000` | http(s) origin of the AI Meeting Draw instance. A non-http(s) value exits with code 2 |
+| `AI_MEETING_DRAW_AGENT_NAME` | `MCP agent` | display name on comments and version history (max 40 chars) |
+| `AI_MEETING_DRAW_TIMEOUT` | `30` | seconds per board API call |
+| `AI_MEETING_DRAW_AI_TIMEOUT` | `180` | seconds for `generate_diagram` |
+| `AI_MEETING_DRAW_AI_PROVIDER` | — | optional BYOK for `generate_diagram`: `claude`, `openai`, `gemini`, `openrouter` or `custom` |
+| `AI_MEETING_DRAW_AI_KEY` | — | your AI provider key. It is sent only to `AI_MEETING_DRAW_BASE_URL`, as the same `X-AI-*` headers the web app uses, and never stored. Unset means the instance's shared pool is used, if it has one |
+| `AI_MEETING_DRAW_AI_MODEL` | — | optional model override |
+| `AI_MEETING_DRAW_AI_BASE` | — | OpenAI-compatible base URL (provider `custom` only) |
 
 CLI: `--help`, `--version`, `--list-tools` (prints the tool definitions as JSON).
 Exit codes: `0` when stdin closes (normal shutdown), `2` for bad configuration.
@@ -80,10 +79,10 @@ Exit codes: `0` when stdin closes (normal shutdown), `2` for bad configuration.
 ## 2. Tools
 
 Every tool returns `structuredContent` that conforms to its `outputSchema`, plus the same
-JSON as a text block. Board tools also return a `resource_link` to `noddle://board/{id}`
+JSON as a text block. Board tools also return a `resource_link` to `ai-meeting-draw://board/{id}`
 (revisions ≥ 2025-06-18). Wherever a tool takes `doc_id`, you can pass either the 12-hex
 id or the board URL (`{base}/d/{id}` or `/embed/{id}`). A URL on a different origin than
-`NODDLE_BASE_URL` is refused.
+`AI_MEETING_DRAW_BASE_URL` is refused.
 
 | Tool | readOnly | destructive | idempotent | openWorld | What it does |
 |---|---|---|---|---|---|
@@ -116,9 +115,9 @@ Errors:
 ## 3. Resources & prompts
 
 - **Resources**: `resources/list` lists the boards **this session** has created, read or
-  edited, as `noddle://board/{id}` (`application/json`, `lastModified`). It starts empty,
+  edited, as `ai-meeting-draw://board/{id}` (`application/json`, `lastModified`). It starts empty,
   because the API has no listing. `resources/templates/list` exposes
-  `noddle://board/{doc_id}`, so a client can read any board by id. `resources/read`
+  `ai-meeting-draw://board/{doc_id}`, so a client can read any board by id. `resources/read`
   returns the same JSON as `get_board`. An unknown board returns `-32602`.
 - **Prompts**:
   - `design_board(topic, notes?)`: generate → sanity-check → `create_board` → reply with
@@ -135,7 +134,7 @@ Errors:
 Claude: generate_diagram(text="Client -> API Gateway -> Payment Service -> Database")
         → create_board(name="Payment flow", diagram=…)
         → add_comment(doc_id, body="Please review indexes for the payments table", node_id="db")
-        → returns https://draw.noddle.dev/d/{id}
+        → returns http://127.0.0.1:8000/d/{id}
 ```
 
 Comments reach an open board in realtime. A diagram written with `update_board` shows up
@@ -147,7 +146,7 @@ when the board is reloaded.
 python3 -m pytest mcp -q        # or: python3 -m unittest discover mcp
 ```
 
-`test_noddle_mcp.py` runs the real server over stdio against a fake in-process REST
+`test_ai_meeting_draw_mcp.py` runs the real server over stdio against a fake in-process REST
 backend. It covers version negotiation (modern and legacy), schema validity, read and
 write tools, board-URL ids, view-only links, resources, prompts, BYOK header forwarding
 and error paths. It also asserts that stdout carries only JSON-RPC, that no request ever
@@ -155,19 +154,18 @@ carries an `Authorization` header, and that a BYOK key never leaks into output o
 
 ## Releasing
 
-`mcp/server.json` is the registry listing (`dev.noddle/draw`); it points at the MCP Bundle
-attached to a GitHub release. The `dev.noddle/*` namespace is verified over HTTP: noddle.dev
-serves the publisher's ed25519 public key at `/.well-known/mcp-registry-auth`.
+`mcp/server.json` is a template registry listing. Update its repository, bundle URL,
+checksum, and verified namespace before publishing it for a new repository owner.
 
-1. Bump the version everywhere, all equal: `__version__` in `noddle_mcp.py`, `version` in
+1. Bump the version everywhere, all equal: `__version__` in `ai_meeting_draw_mcp.py`, `version` in
    `mcpb/manifest.json`, `version` in `pyproject.toml`, and `version` in `server.json`.
    Registry versions are immutable; a metadata-only fix uses a suffix such as `1.0.0-1`.
-2. Build the bundle: `mcp/build_mcpb.sh` → `mcp/dist/noddle-draw.mcpb` (prints its SHA-256).
+2. Build the bundle: `mcp/build_mcpb.sh` → `mcp/dist/ai-meeting-draw.mcpb` (prints its SHA-256).
 3. Create the release with that exact file:
-   `gh release create mcpb-v<version> mcp/dist/noddle-draw.mcpb --title "MCP server <version>"`.
+   `gh release create mcpb-v<version> mcp/dist/ai-meeting-draw.mcpb --title "MCP server <version>"`.
 4. In `server.json`, set the package `identifier` to the release download URL and
    `fileSha256` to the printed hash, then publish with the namespace key holder's
-   `mcp-publisher login http --domain noddle.dev --private-key …` and
+   `mcp-publisher login http --domain ai-meeting-draw.dev --private-key …` and
    `mcp-publisher publish mcp/server.json`.
 
 ## Notes

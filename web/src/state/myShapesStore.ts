@@ -20,7 +20,7 @@ export interface MyShape {
   h: number;
 }
 
-const LS_KEY = "noddle-my-shapes";
+const LS_KEY = "ai-meeting-draw-my-shapes";
 const MAX_SHAPES = 30;
 
 function load(): MyShape[] {

@@ -5,6 +5,7 @@ same regardless of the process working directory.
 """
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -14,7 +15,11 @@ BACKEND_ROOT = Path(__file__).resolve().parent.parent
 # repo root (one above backend/)
 REPO_ROOT = BACKEND_ROOT.parent
 
-_DEFAULT_ORIGINS = "http://127.0.0.1:8000,http://localhost:8000"
+_DEFAULT_ORIGINS = (
+    "http://127.0.0.1:8000,http://localhost:8000,"
+    "http://127.0.0.1:3000,http://localhost:3000,"
+    "http://127.0.0.1:5173,http://localhost:5173"
+)
 
 
 def _load_dotenv(path: Path) -> None:
@@ -39,7 +44,7 @@ _load_dotenv(REPO_ROOT / ".env")
 def _default_origins() -> list[str]:
     return [
         o.strip()
-        for o in os.environ.get("NODDLE_ALLOWED_ORIGINS", _DEFAULT_ORIGINS).split(",")
+        for o in os.environ.get("AI_MEETING_DRAW_ALLOWED_ORIGINS", _DEFAULT_ORIGINS).split(",")
         if o.strip()
     ]
 
@@ -49,9 +54,10 @@ class Settings:
     """Runtime configuration."""
 
     storage_dir: Path = field(default_factory=lambda: BACKEND_ROOT / "storage")
+    log_level: str = field(default_factory=lambda: os.environ.get("LOG_LEVEL", "INFO").upper())
     allowed_origins: list[str] = field(default_factory=_default_origins)
     # Optional privacy-friendly analytics: set PLAUSIBLE_DOMAIN (e.g.
-    # "draw.noddle.dev") and the served SPA shell gets the Plausible snippet.
+    # your deployment domain) and the served SPA shell gets the Plausible snippet.
     # PLAUSIBLE_SRC overrides the script host for self-hosted Plausible.
     plausible_domain: str | None = field(
         default_factory=lambda: os.environ.get("PLAUSIBLE_DOMAIN") or None
@@ -85,6 +91,23 @@ class Settings:
     # Preferred SPA build output; falls back to the vanilla frontend when absent.
     web_dist: Path = field(default_factory=lambda: REPO_ROOT / "web" / "dist")
     frontend_dir: Path = field(default_factory=lambda: REPO_ROOT / "frontend")
+
+    def configure_logging(self) -> None:
+        """Apply the environment-controlled level to app and server logs."""
+        level = getattr(logging, self.log_level, None)
+        if not isinstance(level, int):
+            raise ValueError(f"Invalid LOG_LEVEL: {self.log_level}")
+        root = logging.getLogger()
+        if not root.handlers:
+            logging.basicConfig(
+                level=level,
+                format="%(asctime)s %(levelname)s %(name)s %(message)s",
+            )
+        root.setLevel(level)
+        for handler in root.handlers:
+            handler.setLevel(level)
+        for name in ("ai_meeting_draw", "uvicorn", "uvicorn.error", "uvicorn.access"):
+            logging.getLogger(name).setLevel(level)
 
     def frontend_path(self) -> Path | None:
         """The static dir to serve: built SPA if present, else vanilla frontend,

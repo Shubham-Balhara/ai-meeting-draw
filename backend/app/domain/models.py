@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 class DocumentMeta:
     """Metadata about a stored document (what lives in the index).
 
-    Access model (checked by ``services.auth.can``): noddle is anonymous-only,
+    Access model (checked by ``services.auth.can``): AI Meeting Draw is anonymous-only,
     so the board URL is the capability. ``link_policy`` is the whole story:
     ``"edit"`` (every board created through the API) grants view+edit to
     anyone with the link, ``"view"`` grants read-only, and legacy
@@ -29,7 +29,7 @@ class Document:
     """A document: metadata + the (sanitized) SVG payload + optional diagram.
 
     ``diagram`` is the editable node/edge JSON produced by the frontend's
-    diagram layer (noddle's own model). The SVG remains the render/export shape
+    diagram layer (AI Meeting Draw's own model). The SVG remains the render/export shape
     while the diagram JSON is what makes a board round-trip editable.
     """
 

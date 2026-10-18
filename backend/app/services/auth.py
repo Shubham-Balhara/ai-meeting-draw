@@ -1,6 +1,6 @@
 """Anonymous-only access control.
 
-noddle is account-less (Excalidraw-style): there are no users, sessions or
+AI Meeting Draw is account-less (Excalidraw-style): there are no users, sessions or
 teams. Every caller is the shared :data:`GUEST` principal, and a board's URL
 is its sharing capability — authorization reduces to the document's
 ``link_policy``:

@@ -31,7 +31,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-logger = logging.getLogger("noddle")
+logger = logging.getLogger("ai_meeting_draw")
 
 _ALGO = "AWS4-HMAC-SHA256"
 

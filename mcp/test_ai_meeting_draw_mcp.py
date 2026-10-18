@@ -1,4 +1,4 @@
-"""Drive mcp/noddle_mcp.py over stdio against a FAKE noddle draw REST backend.
+"""Drive mcp/ai_meeting_draw_mcp.py over stdio against a FAKE AI Meeting Draw REST backend.
 
 stdlib unittest, pytest-compatible:
     python3 -m pytest mcp -q        or        python3 -m unittest discover mcp
@@ -17,7 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-SERVER = Path(__file__).with_name("noddle_mcp.py")
+SERVER = Path(__file__).with_name("ai_meeting_draw_mcp.py")
 AI_KEY = "fake-ai-key-for-redaction-test"
 MODERN = "2026-07-28"
 DOC = "0123456789ab"
@@ -37,7 +37,7 @@ def board(bid: str, name: str, policy: str = "edit", diagram: Any = None) -> Dic
             "diagram": diagram}
 
 
-class FakeNoddle:
+class FakeAIMeetingDraw:
     """Just enough of the anonymous /api to exercise every tool; records writes."""
 
     def __init__(self) -> None:
@@ -149,8 +149,8 @@ class FakeNoddle:
 
 class McpProc:
     def __init__(self, base_url: str, extra_env: Optional[Dict[str, str]] = None) -> None:
-        env = {k: v for k, v in os.environ.items() if not k.startswith("NODDLE_")}
-        env.update(NODDLE_BASE_URL=base_url, NODDLE_TIMEOUT="5", NODDLE_AGENT_NAME="Test agent")
+        env = {k: v for k, v in os.environ.items() if not k.startswith("AI_MEETING_DRAW_")}
+        env.update(AI_MEETING_DRAW_BASE_URL=base_url, AI_MEETING_DRAW_TIMEOUT="5", AI_MEETING_DRAW_AGENT_NAME="Test agent")
         env.update(extra_env or {})
         self.p = subprocess.Popen([sys.executable, str(SERVER)], stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
@@ -214,7 +214,7 @@ class _Harness(unittest.TestCase):
     extra_env: Dict[str, str] = {}
 
     def setUp(self) -> None:
-        self.fake = FakeNoddle()
+        self.fake = FakeAIMeetingDraw()
         self.fake.thread.start()
         self.mcp = McpProc(self.fake.url, self.extra_env)
 
@@ -245,7 +245,7 @@ class StdioServerTest(_Harness):
         self.assertEqual(r["resultType"], "complete")
         self.assertIn(MODERN, r["supportedVersions"])
         self.assertEqual(set(r["capabilities"]), {"tools", "resources", "prompts"})
-        self.assertEqual(r["_meta"]["io.modelcontextprotocol/serverInfo"]["name"], "noddle")
+        self.assertEqual(r["_meta"]["io.modelcontextprotocol/serverInfo"]["name"], "AI Meeting Draw")
         self.assertIn(r["cacheScope"], ("public", "private"))
         self.assertIsInstance(r["ttlMs"], int)
 
@@ -268,7 +268,7 @@ class StdioServerTest(_Harness):
         r = self.mcp.request("initialize", {"protocolVersion": "2025-06-18", "capabilities": {},
                                             "clientInfo": {"name": "t", "version": "0"}})["result"]
         self.assertEqual(r["protocolVersion"], "2025-06-18")
-        self.assertEqual(r["serverInfo"]["name"], "noddle")
+        self.assertEqual(r["serverInfo"]["name"], "AI Meeting Draw")
         self.assertIn("title", r["serverInfo"])
         self.assertIn("tools", r["capabilities"])
         self.mcp.send({"jsonrpc": "2.0", "method": "notifications/initialized"})  # no reply
@@ -350,7 +350,7 @@ class StdioServerTest(_Harness):
         self.assertEqual(r["structuredContent"]["id"], DOC)
         other = self.mcp.call("get_board", {"doc_id": f"https://elsewhere.example/d/{DOC}"})["result"]
         self.assertTrue(other["isError"])
-        self.assertIn("NODDLE_BASE_URL", other["content"][0]["text"])
+        self.assertIn("AI_MEETING_DRAW_BASE_URL", other["content"][0]["text"])
 
     def test_write_tool_update_board(self) -> None:
         diagram = {"pages": [{"id": "p1", "name": "Page 1", "nodes": [], "edges": [
@@ -437,12 +437,12 @@ class StdioServerTest(_Harness):
         self.mcp.call("get_board", {"doc_id": DOC})
         self.mcp.call("create_board", {"name": "New one"})
         uris = [x["uri"] for x in self.mcp.request("resources/list", meta=modern_meta())["result"]["resources"]]
-        self.assertEqual(uris, ["noddle://board/fedcba987654", f"noddle://board/{DOC}"])  # newest first
+        self.assertEqual(uris, ["ai-meeting-draw://board/fedcba987654", f"ai-meeting-draw://board/{DOC}"])  # newest first
         tpl = self.mcp.request("resources/templates/list", meta=modern_meta())["result"]
-        self.assertEqual(tpl["resourceTemplates"][0]["uriTemplate"], "noddle://board/{doc_id}")
-        rd = self.mcp.request("resources/read", {"uri": f"noddle://board/{VIEW_ONLY}"}, meta=modern_meta())
+        self.assertEqual(tpl["resourceTemplates"][0]["uriTemplate"], "ai-meeting-draw://board/{doc_id}")
+        rd = self.mcp.request("resources/read", {"uri": f"ai-meeting-draw://board/{VIEW_ONLY}"}, meta=modern_meta())
         self.assertEqual(json.loads(rd["result"]["contents"][0]["text"])["id"], VIEW_ONLY)
-        missing = self.mcp.request("resources/read", {"uri": "noddle://board/ffffffffffff"},
+        missing = self.mcp.request("resources/read", {"uri": "ai-meeting-draw://board/ffffffffffff"},
                                    meta=modern_meta())
         self.assertEqual(missing["error"]["code"], -32602)
         bogus = self.mcp.request("resources/read", {"uri": "file:///etc/passwd"}, meta=modern_meta())
@@ -497,17 +497,17 @@ class StdioServerTest(_Harness):
 
     def _check_output_schema(self, tool: str, value: Any) -> None:
         sys.path.insert(0, str(SERVER.parent))
-        import noddle_mcp  # noqa: E402 — validate with the server's own validator
+        import ai_meeting_draw_mcp  # noqa: E402 — validate with the server's own validator
 
-        schema = noddle_mcp.TOOLS_BY_NAME[tool]["outputSchema"]
-        self.assertEqual(noddle_mcp.validate(schema, value, "out"), [])
+        schema = ai_meeting_draw_mcp.TOOLS_BY_NAME[tool]["outputSchema"]
+        self.assertEqual(ai_meeting_draw_mcp.validate(schema, value, "out"), [])
 
 
 class ByokTest(_Harness):
     """generate_diagram forwards a bring-your-own key as X-AI-* headers and
     never lets it leak (tearDown asserts AI_KEY is absent from stdout/stderr)."""
 
-    extra_env = {"NODDLE_AI_PROVIDER": "claude", "NODDLE_AI_KEY": AI_KEY}
+    extra_env = {"AI_MEETING_DRAW_AI_PROVIDER": "claude", "AI_MEETING_DRAW_AI_KEY": AI_KEY}
 
     def test_generate_diagram_with_key(self) -> None:
         r = self.mcp.call("generate_diagram", {"text": "A -> B"})["result"]
@@ -518,7 +518,7 @@ class ByokTest(_Harness):
 
 
 class EchoedKeyTest(_Harness):
-    extra_env = {"NODDLE_AI_PROVIDER": "custom", "NODDLE_AI_KEY": AI_KEY}
+    extra_env = {"AI_MEETING_DRAW_AI_PROVIDER": "custom", "AI_MEETING_DRAW_AI_KEY": AI_KEY}
 
     def test_upstream_error_echoing_key_is_redacted(self) -> None:
         r = self.mcp.call("generate_diagram", {"text": "A -> B"})["result"]
@@ -532,17 +532,17 @@ class CoreTest(unittest.TestCase):
 
     def setUp(self) -> None:
         sys.path.insert(0, str(SERVER.parent))
-        import noddle_mcp  # noqa: E402
+        import ai_meeting_draw_mcp  # noqa: E402
 
-        self.nm = noddle_mcp
+        self.nm = ai_meeting_draw_mcp
 
     def test_defaults_are_oss(self) -> None:
         cfg = self.nm.Config({})
-        self.assertEqual(cfg.base_url, "https://draw.noddle.dev")
+        self.assertEqual(cfg.base_url, "http://127.0.0.1:8000")
         self.assertEqual(cfg.agent_name, "MCP agent")
         self.assertEqual(cfg.ai_headers(), {})
         src = SERVER.read_text()
-        for banned in ("NODDLE_TOKEN", "Bearer", "board.noddle.dev", "scopes"):
+        for banned in ("AI_MEETING_DRAW_TOKEN", "Bearer", "board.ai-meeting-draw.dev", "scopes"):
             self.assertNotIn(banned, src)
 
     def test_custom_backend(self) -> None:
@@ -569,12 +569,12 @@ class CliTest(unittest.TestCase):
     def test_help_and_bad_config(self) -> None:
         out = subprocess.run([sys.executable, str(SERVER), "--help"], capture_output=True, text=True)
         self.assertEqual(out.returncode, 0)
-        self.assertIn("NODDLE_BASE_URL", out.stdout)
+        self.assertIn("AI_MEETING_DRAW_BASE_URL", out.stdout)
         lt = subprocess.run([sys.executable, str(SERVER), "--list-tools"], capture_output=True, text=True)
         self.assertEqual(lt.returncode, 0)
         self.assertIn("get_board", [t["name"] for t in json.loads(lt.stdout)])
         bad = subprocess.run([sys.executable, str(SERVER)], input="", capture_output=True, text=True,
-                             env=dict(os.environ, NODDLE_BASE_URL="ftp://x"))
+                             env=dict(os.environ, AI_MEETING_DRAW_BASE_URL="ftp://x"))
         self.assertEqual(bad.returncode, 2)
         self.assertEqual(bad.stdout, "")
 

@@ -5,7 +5,7 @@ Dependency wiring (composition root):
         -> DocumentService / CommentService (services)
             -> injected into api handlers via Depends (app.state.*)
 
-noddle is ANONYMOUS-ONLY (Excalidraw-style): no accounts, no sessions — the
+AI Meeting Draw is ANONYMOUS-ONLY (Excalidraw-style): no accounts, no sessions — the
 board URL is the sharing capability. Exposes ``app = create_app()`` so both
 ``uvicorn app.main:app`` and the ``backend/main.py`` shim (``uvicorn
 main:app``) work.
@@ -34,8 +34,9 @@ from app.services.audit import AuditService
 from app.services.comments import CommentService
 from app.services.documents import DocumentService
 from app.services.object_storage import ObjectStorage
+from app.meeting.api import configure_meetings, router as meeting_router
 
-logger = logging.getLogger("noddle")
+logger = logging.getLogger("ai_meeting_draw")
 
 
 def _build_repositories(settings: Settings):
@@ -74,8 +75,10 @@ def _build_repositories(settings: Settings):
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
+    settings.configure_logging()
+    logger.info("Logging configured level=%s", settings.log_level)
 
-    app = FastAPI(title="Noddle Board", version="0.1.0")
+    app = FastAPI(title="AI Meeting Draw", version="0.1.0")
 
     # Railway's edge does not compress responses — the SPA bundle and board
     # JSON payloads need it. WebSocket routes are untouched by this middleware.
@@ -156,6 +159,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.ai_service,
         store=ai_job_store,
     )
+    configure_meetings(app)
+    logger.info("AI Meeting Draw backend configured")
 
     # ---- routes -----------------------------------------------------------
     @app.get("/api/config")
@@ -177,6 +182,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(comments_router)  # /api/documents/{id}/comments
     app.include_router(ai_router)
     app.include_router(collab_router)  # WebSocket /ws/documents/{id}
+    app.include_router(meeting_router)  # meeting audio, STT, intelligence
 
     # ---- serve the frontend (mount last so /api wins) ---------------------
     frontend = settings.frontend_path()
@@ -233,7 +239,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     else:  # pragma: no cover
         @app.get("/", response_class=HTMLResponse)
         def _no_frontend() -> str:
-            return "<h1>noddle API</h1><p>Frontend has not been built.</p>"
+            return "<h1>AI Meeting Draw API</h1><p>Frontend has not been built.</p>"
 
     return app
 

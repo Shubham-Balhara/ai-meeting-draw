@@ -1,4 +1,4 @@
-"""drawio — parse draw.io / diagrams.net files into noddle diagram JSON.
+"""drawio — parse draw.io / diagrams.net files into AI Meeting Draw diagram JSON.
 
 Pure stdlib (xml.etree + zlib + base64), no network. Handles the three
 on-disk shapes draw.io produces:
@@ -9,15 +9,15 @@ on-disk shapes draw.io produces:
     (uncompressed saves / "Editable SVG" exports),
   * a bare ``<mxGraphModel>`` root.
 
-Each ``<diagram>`` becomes one noddle PAGE — the output is the multi-page
+Each ``<diagram>`` becomes one AI Meeting Draw PAGE — the output is the multi-page
 sidecar shape ``{"pages": [{id, name, nodes, edges}]}``.
 
 Mapping notes (core coverage — #9/#10):
   * vertex geometry is made ABSOLUTE by walking the parent chain, so shapes
     inside groups / swimlanes land where the user drew them;
   * groups & swimlanes become plain ``rect`` nodes placed BEFORE their
-    children (noddle z-order = insertion order → they render as backgrounds);
-  * ``style`` tokens map onto noddle ``NodeKind``s (ellipse, rhombus→diamond,
+    children (AI Meeting Draw z-order = insertion order → they render as backgrounds);
+  * ``style`` tokens map onto AI Meeting Draw ``NodeKind``s (ellipse, rhombus→diamond,
     cylinder, hexagon, …); unknown shapes degrade to rect/rounded;
   * edges keep their endpoints (floating attachments), user waypoints
     (``<Array as="points">``), labels (own value + child edgeLabel cells),
@@ -223,7 +223,7 @@ def _abs_origin(
 
 
 def drawio_to_diagram(xml_text: str) -> dict:
-    """Parse draw.io XML → noddle multi-page diagram JSON. Raises InvalidDrawio."""
+    """Parse draw.io XML → AI Meeting Draw multi-page diagram JSON. Raises InvalidDrawio."""
     if len(xml_text.encode("utf-8", "ignore")) > _MAX_XML_BYTES:
         raise InvalidDrawio("File is too large (5MB limit).")
     try:
@@ -293,7 +293,7 @@ def drawio_to_diagram(xml_text: str) -> dict:
                     "stroke": _color(style, "strokeColor", _NODE_STROKE),
                     "strokeWidth": float(style.get("strokeWidth") or 2),
                 }
-                # Containers render first → background (noddle z = insertion order).
+                # Containers render first → background (AI Meeting Draw z = insertion order).
                 if is_container:
                     nodes.insert(0, node)
                 else:

@@ -50,7 +50,7 @@ def prompt_section() -> str:
         "\n### COLOURS — the board palette (takes precedence over any other "
         "colour guidance)\n"
         "Paint with the editor's draw palette ONLY — the same swatches the user "
-        "picks from, so your board looks hand-made in noddle:\n"
+        "picks from, so your board looks hand-made in ai-meeting-draw:\n"
         f"- strokes / text / arrows: {strokes} (ink {INK} is the default for "
         "text, arrows and neutral shapes)\n"
         f"- fills: {fills}\n"

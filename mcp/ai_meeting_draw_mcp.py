@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""noddle draw MCP server — boards as MCP tools, resources and prompts.
+"""AI Meeting Draw MCP server — boards as MCP tools, resources and prompts.
 
 Stdlib-only (urllib + json), stdio transport: one JSON-RPC 2.0 message per
-line on stdin/stdout; logs go to STDERR only. A thin wrapper over the noddle
+line on stdin/stdout; logs go to STDERR only. A thin wrapper over the AI Meeting Draw
 REST API.
 
-Access model: noddle draw is anonymous (Excalidraw-style). There are no
+Access model: AI Meeting Draw is anonymous (Excalidraw-style). There are no
 accounts and no tokens — a board's id (12 hex chars) or URL IS the
 capability. The agent works on any board it is given, signs its comments and
-version snapshots with NODDLE_AGENT_NAME, and can only see boards it was told
+version snapshots with AI_MEETING_DRAW_AGENT_NAME, and can only see boards it was told
 about or created itself (there is no board listing in the API).
 
 Protocol: dual-era per the MCP spec "Versioning and Compatibility" page.
@@ -19,11 +19,11 @@ Protocol: dual-era per the MCP spec "Versioning and Compatibility" page.
     ``initialize`` handshake, scoped to this stdio process.
 
 Env:
-  NODDLE_BASE_URL    default https://draw.noddle.dev (self-hosted: http://127.0.0.1:8000)
-  NODDLE_AGENT_NAME  display name on comments / version history (default "MCP agent")
-  NODDLE_TIMEOUT     HTTP timeout in seconds for board calls (default 30)
-  NODDLE_AI_TIMEOUT  HTTP timeout for generate_diagram (default 180)
-  NODDLE_AI_PROVIDER + NODDLE_AI_KEY (optional NODDLE_AI_MODEL, NODDLE_AI_BASE)
+  AI_MEETING_DRAW_BASE_URL    default http://127.0.0.1:8000
+  AI_MEETING_DRAW_AGENT_NAME  display name on comments / version history (default "MCP agent")
+  AI_MEETING_DRAW_TIMEOUT     HTTP timeout in seconds for board calls (default 30)
+  AI_MEETING_DRAW_AI_TIMEOUT  HTTP timeout for generate_diagram (default 180)
+  AI_MEETING_DRAW_AI_PROVIDER + AI_MEETING_DRAW_AI_KEY (optional AI_MEETING_DRAW_AI_MODEL, AI_MEETING_DRAW_AI_BASE)
                      bring-your-own AI key for generate_diagram, forwarded as the
                      X-AI-* headers the web app uses. Unset ⇒ the server's
                      shared pool, if the instance has one.
@@ -48,17 +48,17 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 __version__ = "1.0.0"
 
-DEFAULT_BASE_URL = "https://draw.noddle.dev"
+DEFAULT_BASE_URL = "http://127.0.0.1:8000"
 
 SERVER_INFO = {
-    "name": "noddle",
-    "title": "noddle draw",
+    "name": "AI Meeting Draw",
+    "title": "AI Meeting Draw",
     "version": __version__,
-    "description": "Read, create and edit noddle draw diagram boards and their comments.",
+    "description": "Read, create and edit AI Meeting Draw diagram boards and their comments.",
     "websiteUrl": DEFAULT_BASE_URL,
 }
 INSTRUCTIONS = (
-    "noddle boards are editable diagrams: {pages:[{id,name,nodes,edges}]}. Boards are "
+    "AI Meeting Draw boards are editable diagrams: {pages:[{id,name,nodes,edges}]}. Boards are "
     "anonymous: a board id (12 hex chars) or its URL ({base}/d/{id}) is all you need, and "
     "anyone holding the link can open it. Read with get_board, edit the JSON, then write the "
     "WHOLE diagram back with update_board (pass expected_updated_at from get_board to avoid "
@@ -88,7 +88,7 @@ UNSUPPORTED_PROTOCOL_VERSION = -32022
 DOC_ID_RE = re.compile(r"^[0-9a-f]{12}$")
 BOARD_URL_RE = re.compile(r"^(https?://[^/?#\s]+)(?:/[^?#\s]*)?/(?:d|embed)/([0-9a-f]{12})(?:[/?#]\S*)?$")
 SAFE_ID_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,128}$")
-BOARD_URI_RE = re.compile(r"^noddle://board/([0-9a-f]{12})$")
+BOARD_URI_RE = re.compile(r"^ai-meeting-draw://board/([0-9a-f]{12})$")
 MAX_BODY = 25 * 1024 * 1024
 PAGE_SIZE = 100
 
@@ -98,7 +98,7 @@ _log_lock = threading.Lock()
 def log(msg: str) -> None:
     """STDERR only — stdout is the protocol channel."""
     with _log_lock:
-        sys.stderr.write(f"[noddle-mcp] {redact(msg)}\n")
+        sys.stderr.write(f"[ai-meeting-draw-mcp] {redact(msg)}\n")
         sys.stderr.flush()
 
 
@@ -108,29 +108,29 @@ def log(msg: str) -> None:
 class Config:
     def __init__(self, env: Optional[Dict[str, str]] = None) -> None:
         env = os.environ if env is None else env
-        self.base_url = (env.get("NODDLE_BASE_URL") or DEFAULT_BASE_URL).strip().rstrip("/")
-        self.agent_name = ((env.get("NODDLE_AGENT_NAME") or "").strip() or "MCP agent")[:40]
-        self.timeout = _float_env(env, "NODDLE_TIMEOUT", 30.0)
-        self.ai_timeout = _float_env(env, "NODDLE_AI_TIMEOUT", 180.0)
-        self.ai_provider = (env.get("NODDLE_AI_PROVIDER") or "").strip().lower()
-        self.ai_key = (env.get("NODDLE_AI_KEY") or "").strip()
-        self.ai_model = (env.get("NODDLE_AI_MODEL") or "").strip()
-        self.ai_base = (env.get("NODDLE_AI_BASE") or "").strip()
+        self.base_url = (env.get("AI_MEETING_DRAW_BASE_URL") or DEFAULT_BASE_URL).strip().rstrip("/")
+        self.agent_name = ((env.get("AI_MEETING_DRAW_AGENT_NAME") or "").strip() or "MCP agent")[:40]
+        self.timeout = _float_env(env, "AI_MEETING_DRAW_TIMEOUT", 30.0)
+        self.ai_timeout = _float_env(env, "AI_MEETING_DRAW_AI_TIMEOUT", 180.0)
+        self.ai_provider = (env.get("AI_MEETING_DRAW_AI_PROVIDER") or "").strip().lower()
+        self.ai_key = (env.get("AI_MEETING_DRAW_AI_KEY") or "").strip()
+        self.ai_model = (env.get("AI_MEETING_DRAW_AI_MODEL") or "").strip()
+        self.ai_base = (env.get("AI_MEETING_DRAW_AI_BASE") or "").strip()
 
     def problems(self) -> List[str]:
         parts = urllib.parse.urlsplit(self.base_url)
         if parts.scheme not in ("http", "https") or not parts.netloc:
-            return [f"NODDLE_BASE_URL must be an http(s) origin, got {self.base_url!r}"]
+            return [f"AI_MEETING_DRAW_BASE_URL must be an http(s) origin, got {self.base_url!r}"]
         return []
 
     def warnings(self) -> List[str]:
         out = []
         if self.ai_key and not self.ai_provider:
-            out.append("NODDLE_AI_KEY is set without NODDLE_AI_PROVIDER — generate_diagram "
+            out.append("AI_MEETING_DRAW_AI_KEY is set without AI_MEETING_DRAW_AI_PROVIDER — generate_diagram "
                        "will be rejected by the server.")
         parts = urllib.parse.urlsplit(self.base_url)
         if self.ai_key and parts.scheme == "http" and parts.hostname not in ("127.0.0.1", "localhost", "::1"):
-            out.append("NODDLE_BASE_URL is plain http on a non-loopback host — your AI key "
+            out.append("AI_MEETING_DRAW_BASE_URL is plain http on a non-loopback host — your AI key "
                        "travels in cleartext.")
         return out
 
@@ -165,7 +165,7 @@ def redact(text: str) -> str:
     return text
 
 
-# ---- noddle REST client --------------------------------------------------------
+# ---- AI Meeting Draw REST client --------------------------------------------------------
 
 
 class ApiError(Exception):
@@ -193,8 +193,8 @@ _STATUS_HINTS = {
     404: "not found — check the board id (boards are reachable by id/URL only)",
     413: "payload too large",
     422: "the server could not use this input/output",
-    429: "rate limited — the free shared AI tier allows only a few requests; set NODDLE_AI_KEY",
-    503: "service unavailable — no AI backend (set NODDLE_AI_PROVIDER + NODDLE_AI_KEY) or the "
+    429: "rate limited — the free shared AI tier allows only a few requests; set AI_MEETING_DRAW_AI_KEY",
+    503: "service unavailable — no AI backend (set AI_MEETING_DRAW_AI_PROVIDER + AI_MEETING_DRAW_AI_KEY) or the "
          "shared quota is used up",
 }
 
@@ -202,7 +202,7 @@ _STATUS_HINTS = {
 def api(method: str, path: str, payload: Any = None, timeout: Optional[float] = None,
         headers: Optional[Dict[str, str]] = None) -> Any:
     data = None if payload is None else json.dumps(payload).encode("utf-8")
-    h = {"Accept": "application/json", "User-Agent": f"noddle-mcp/{__version__}"}
+    h = {"Accept": "application/json", "User-Agent": f"ai-meeting-draw-mcp/{__version__}"}
     if data is not None:
         h["Content-Type"] = "application/json"
     h.update(headers or {})
@@ -213,22 +213,22 @@ def api(method: str, path: str, payload: Any = None, timeout: Optional[float] = 
     except urllib.error.HTTPError as e:
         raise ApiError(e.code, _http_error_text(e)) from None
     except urllib.error.URLError as e:
-        raise ApiError(0, f"noddle did not respond at {CONFIG.base_url}: {e.reason}") from None
+        raise ApiError(0, f"AI Meeting Draw did not respond at {CONFIG.base_url}: {e.reason}") from None
     except (TimeoutError, OSError) as e:  # socket.timeout is an OSError
-        raise ApiError(0, f"noddle request timed out or failed at {CONFIG.base_url}: {e}") from None
+        raise ApiError(0, f"AI Meeting Draw request timed out or failed at {CONFIG.base_url}: {e}") from None
     if len(raw) > MAX_BODY:
-        raise ApiError(0, "noddle response exceeded the 25MB safety cap")
+        raise ApiError(0, "AI Meeting Draw response exceeded the 25MB safety cap")
     if not raw.strip():
         return {}
     try:
         return json.loads(raw.decode("utf-8"))
     except ValueError:
-        raise ApiError(0, "noddle returned a non-JSON response") from None
+        raise ApiError(0, "AI Meeting Draw returned a non-JSON response") from None
 
 
 def _http_error_text(e: urllib.error.HTTPError) -> str:
     if 300 <= e.code < 400:
-        return (f"noddle API {e.code}: refused a cross-origin redirect — set NODDLE_BASE_URL "
+        return (f"AI Meeting Draw API {e.code}: refused a cross-origin redirect — set AI_MEETING_DRAW_BASE_URL "
                 "to the final origin")
     try:
         body = e.read(4096)
@@ -247,17 +247,17 @@ def format_api_error(code: int, body: bytes) -> str:
         detail = d if isinstance(d, str) else json.dumps(d)
     except Exception:  # noqa: BLE001 — best-effort detail only
         detail = ""
-    msg = f"noddle API {code}: {_STATUS_HINTS.get(code, 'request failed')}"
+    msg = f"AI Meeting Draw API {code}: {_STATUS_HINTS.get(code, 'request failed')}"
     if detail:
         msg += f" — {detail[:300]}"
     return redact(msg)
 
 
 class Backend:
-    """How the tools reach noddle. Subclasses implement ``call``.
+    """How the tools reach ai-meeting-draw. Subclasses implement ``call``.
 
     ``call(method, path, payload=None, timeout=None, headers=None)`` performs
-    one noddle REST call (path like ``/api/documents/{id}``) and returns the
+    one AI Meeting Draw REST call (path like ``/api/documents/{id}``) and returns the
     parsed JSON, or raises ``ApiError(status, message)``."""
 
     base_url = DEFAULT_BASE_URL
@@ -302,7 +302,7 @@ REST = RestBackend()
 
 
 def board_uri(doc_id: str) -> str:
-    return f"noddle://board/{doc_id}"
+    return f"ai-meeting-draw://board/{doc_id}"
 
 
 # ---- boards this process knows about -------------------------------------------
@@ -455,7 +455,7 @@ def resolve_doc_id(b: Backend, value: Any) -> str:
     mine = urllib.parse.urlsplit(b.base_url)
     if (origin.scheme, origin.netloc) != (mine.scheme, mine.netloc):
         raise ToolError(f"That board lives on {m.group(1)}, but this server talks to "
-                        f"{b.base_url} — set NODDLE_BASE_URL to the board's origin.")
+                        f"{b.base_url} — set AI_MEETING_DRAW_BASE_URL to the board's origin.")
     return m.group(2)
 
 
@@ -542,7 +542,7 @@ DOC_ID = {"type": "string", "minLength": 12, "maxLength": 2048,
 DIAGRAM_IN = {
     "type": "object",
     "description": (
-        "noddle diagram JSON, passed through as-is: {pages:[{id,name,nodes,edges}]} "
+        "AI Meeting Draw diagram JSON, passed through as-is: {pages:[{id,name,nodes,edges}]} "
         "(or legacy {nodes,edges}). Node required: id, kind (rect|rounded|ellipse|diamond|"
         "cylinder|text|freedraw|… — the editor catalog), x, y, w, h, text, fill, stroke, "
         "strokeWidth. Edge required: id, source, target (attachments {kind:'floating',nodeId} | "
@@ -615,7 +615,7 @@ def t_create_board(b: Backend, a: Dict[str, Any]) -> Dict[str, Any]:
     meta = meta_of(b.call("POST", "/api/documents/new", body))
     doc_id = str(meta.get("id") or "")
     if not DOC_ID_RE.match(doc_id):
-        raise ToolError("noddle did not return a board id")
+        raise ToolError("AI Meeting Draw did not return a board id")
     return _ref(b, doc_id, meta, a["name"])
 
 
@@ -833,7 +833,7 @@ TOOLS: List[Dict[str, Any]] = [
     {
         "name": "add_comment",
         "title": "Add comment",
-        "description": "Comment on a board, signed with NODDLE_AGENT_NAME. Anchor to ONE of: "
+        "description": "Comment on a board, signed with AI_MEETING_DRAW_AGENT_NAME. Anchor to ONE of: "
                        "node_id, edge_id, a reply to a thread root (parent_id), or a canvas "
                        "point (x, y; default 100,100). Works on view-only links too. Returns "
                        "the full updated thread list.",
@@ -859,10 +859,10 @@ TOOLS: List[Dict[str, Any]] = [
     {
         "name": "generate_diagram",
         "title": "Generate diagram from text",
-        "description": "Turn prose or Mermaid into editable noddle diagram JSON via the server's "
-                       "AI (your own key from NODDLE_AI_PROVIDER/NODDLE_AI_KEY, else the "
+        "description": "Turn prose or Mermaid into editable AI Meeting Draw diagram JSON via the server's "
+                       "AI (your own key from AI_MEETING_DRAW_AI_PROVIDER/AI_MEETING_DRAW_AI_KEY, else the "
                        "instance's shared pool if it has one). Does NOT save anything — pass the "
-                       "result to create_board or update_board. The text leaves noddle for the "
+                       "result to create_board or update_board. The text leaves AI Meeting Draw for the "
                        "AI provider: never include PII, credentials or account numbers.",
         "inputSchema": {
             "type": "object",
@@ -959,7 +959,7 @@ def m_tools_call(params: Dict[str, Any], ctx: Ctx) -> Dict[str, Any]:
         content.append({"type": "resource_link", "uri": board_uri(doc_id),
                         "name": str(structured.get("name") or doc_id),
                         "mimeType": "application/json",
-                        "description": f"noddle board — open {ctx.backend.board_url(doc_id)}"})
+                        "description": f"AI Meeting Draw board — open {ctx.backend.board_url(doc_id)}"})
     return {"content": content, "structuredContent": structured, "isError": False}
 
 
@@ -979,7 +979,7 @@ def m_resources_list(params: Dict[str, Any], ctx: Ctx) -> Dict[str, Any]:
         label = str(d.get("name") or d["id"])
         r: Dict[str, Any] = {"uri": board_uri(d["id"]), "name": label, "title": label,
                              "mimeType": "application/json",
-                             "description": f"noddle board {b.board_url(d['id'])}"}
+                             "description": f"AI Meeting Draw board {b.board_url(d['id'])}"}
         lm = iso(d.get("updated_at"))
         if lm:
             r["annotations"] = {"lastModified": lm}
@@ -993,7 +993,7 @@ def m_resources_list(params: Dict[str, Any], ctx: Ctx) -> Dict[str, Any]:
 def m_resource_templates(params: Dict[str, Any], ctx: Ctx) -> Dict[str, Any]:
     _reject_cursor(params)
     return _cacheable(ctx, {"resourceTemplates": [{
-        "uriTemplate": "noddle://board/{doc_id}", "name": "board", "title": "noddle board",
+        "uriTemplate": "ai-meeting-draw://board/{doc_id}", "name": "board", "title": "AI Meeting Draw board",
         "description": "A board's name, page summary and editable diagram JSON (doc_id = 12-hex id).",
         "mimeType": "application/json",
     }]}, 3_600_000, "public")
@@ -1024,7 +1024,7 @@ PROMPTS = [
     {
         "name": "design_board",
         "title": "Design a new board",
-        "description": "Draft a new noddle board about a topic and return its link.",
+        "description": "Draft a new AI Meeting Draw board about a topic and return its link.",
         "arguments": [
             {"name": "topic", "description": "What the diagram should explain.", "required": True},
             {"name": "notes", "description": "Extra constraints (audience, components, style).",
@@ -1057,7 +1057,7 @@ def m_prompts_get(params: Dict[str, Any], ctx: Ctx) -> Dict[str, Any]:
             raise RpcError(INVALID_PARAMS, "Missing required argument: topic")
         notes = args.get("notes", "").strip()
         text = (
-            f"Create a noddle board that explains: {topic}\n"
+            f"Create a AI Meeting Draw board that explains: {topic}\n"
             + (f"Constraints: {notes}\n" if notes else "")
             + "\nSteps:\n"
             "1. Call generate_diagram with a precise description (or Mermaid) of the components "
@@ -1079,7 +1079,7 @@ def m_prompts_get(params: Dict[str, Any], ctx: Ctx) -> Dict[str, Any]:
             raise RpcError(INVALID_PARAMS, str(e)) from None
         resource = read_board_resource(ctx.backend, board_uri(doc_id))
         text = (
-            "Review the noddle board above for clarity: overlapping or crowded shapes, "
+            "Review the AI Meeting Draw board above for clarity: overlapping or crowded shapes, "
             "unlabeled or ambiguous connectors, inconsistent colours, missing components. "
             "For each concrete issue call add_comment anchored to the node_id or edge_id it "
             f"concerns (doc_id={doc_id}). Do not change the diagram unless asked. Finish with a "
@@ -1154,7 +1154,7 @@ class Server:
         self.write_lock = threading.Lock()
         self.legacy_version: Optional[str] = None  # set by initialize (legacy era only)
         self.cancelled: set = set()
-        self.pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="noddle-mcp")
+        self.pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="ai-meeting-draw-mcp")
 
     # -- output
     def send(self, obj: Any) -> None:
@@ -1291,9 +1291,9 @@ class Server:
         return 0
 
 
-HELP = f"""noddle-mcp {__version__} — MCP server (stdio) for noddle draw boards.
+HELP = f"""ai-meeting-draw-mcp {__version__} — MCP server (stdio) for AI Meeting Draw boards.
 
-Usage: noddle_mcp.py [--help] [--version] [--list-tools]
+Usage: ai_meeting_draw_mcp.py [--help] [--version] [--list-tools]
 
 Speaks MCP {MODERN_VERSIONS[0]} (stateless, server/discover) and the legacy
 initialize handshake ({', '.join(LEGACY_VERSIONS)}). Reads JSON-RPC from stdin,
@@ -1301,17 +1301,17 @@ writes it to stdout; logs go to stderr. No accounts or tokens: a board id/URL
 is the capability.
 
 Environment:
-  NODDLE_BASE_URL    default {DEFAULT_BASE_URL} (self-hosted: http://127.0.0.1:8000)
-  NODDLE_AGENT_NAME  name on comments / version history (default "MCP agent")
-  NODDLE_TIMEOUT     seconds per board API call (default 30)
-  NODDLE_AI_TIMEOUT  seconds for generate_diagram (default 180)
-  NODDLE_AI_PROVIDER claude|openai|gemini|openrouter|custom  (optional, BYOK)
-  NODDLE_AI_KEY      your AI provider key (optional; else the instance's pool)
-  NODDLE_AI_MODEL    model override (optional)
-  NODDLE_AI_BASE     OpenAI-compatible base URL (provider "custom" only)
+  AI_MEETING_DRAW_BASE_URL    default {DEFAULT_BASE_URL} (self-hosted: http://127.0.0.1:8000)
+  AI_MEETING_DRAW_AGENT_NAME  name on comments / version history (default "MCP agent")
+  AI_MEETING_DRAW_TIMEOUT     seconds per board API call (default 30)
+  AI_MEETING_DRAW_AI_TIMEOUT  seconds for generate_diagram (default 180)
+  AI_MEETING_DRAW_AI_PROVIDER claude|openai|gemini|openrouter|custom  (optional, BYOK)
+  AI_MEETING_DRAW_AI_KEY      your AI provider key (optional; else the instance's pool)
+  AI_MEETING_DRAW_AI_MODEL    model override (optional)
+  AI_MEETING_DRAW_AI_BASE     OpenAI-compatible base URL (provider "custom" only)
 
 Register with Claude Code:
-  claude mcp add noddle -- python3 mcp/noddle_mcp.py
+  claude mcp add AI Meeting Draw -- python3 mcp/ai_meeting_draw_mcp.py
 
 Exit codes: 0 stdin closed, 2 bad configuration.
 """
@@ -1323,7 +1323,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         sys.stdout.write(HELP)
         return 0
     if "--version" in argv:
-        sys.stdout.write(f"noddle-mcp {__version__}\n")
+        sys.stdout.write(f"ai-meeting-draw-mcp {__version__}\n")
         return 0
     if "--list-tools" in argv:
         sys.stdout.write(json.dumps(tool_defs(), indent=2) + "\n")

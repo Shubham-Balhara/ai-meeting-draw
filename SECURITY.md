@@ -1,16 +1,15 @@
 # Security Policy
 
-Thanks for helping keep noddle draw and its users safe.
+Thanks for helping keep AI Meeting Draw and its users safe.
 
 ## Supported versions
 
-noddle draw ships from `main` as a single rolling release — there are no
-long-term support branches. Security fixes land on `main` and deploy to
-draw.noddle.dev; self-hosters should track the latest `main`.
+AI Meeting Draw ships as a single rolling release; there are no long-term
+support branches. Self-hosters should track the repository's default branch.
 
 | Version | Supported |
 |---|---|
-| Latest `main` | ✅ |
+| Latest default branch | ✅ |
 | Older commits / forks | ❌ (please update) |
 
 ## Reporting a vulnerability
@@ -20,8 +19,7 @@ that discloses it before a fix is available.
 
 Instead, use GitHub's private vulnerability reporting:
 
-1. Go to the **Security** tab of
-   [noddle-dev/noddle-draw](https://github.com/noddle-dev/noddle-draw/security).
+1. Go to this repository's **Security** tab.
 2. Click **Report a vulnerability** and fill in the advisory form.
 
 This opens a private channel with the maintainers. If private reporting is
@@ -48,7 +46,7 @@ Please give us a reasonable window to ship a fix before any public disclosure.
 
 ## Scope & threat model
 
-noddle draw is **anonymous by design** — there are no accounts, and a board's
+AI Meeting Draw is **anonymous by design** — there are no accounts, and a board's
 URL is its access capability (anyone with the link can view and edit it, the
 same model as Excalidraw share links). Keep the following in mind when judging
 what is a vulnerability:
@@ -73,10 +71,10 @@ what is a vulnerability:
 
 ## Self-hosting notes
 
-If you deploy noddle draw yourself:
+If you deploy AI Meeting Draw yourself:
 
 - serve it over HTTPS — BYOK keys transit as request headers;
-- set `NODDLE_ALLOWED_ORIGINS` tightly (production is same-origin);
+- set `AI_MEETING_DRAW_ALLOWED_ORIGINS` tightly (production is same-origin);
 - if you enable the free AI pool (`OPENROUTER_POOL_KEY`), keep the per-IP
   limits, `POOL_DAILY_BUDGET`, and Cloudflare Turnstile guards on;
 - keep dependencies current.

@@ -1,4 +1,4 @@
-# Contributing to noddle
+# Contributing to AI Meeting Draw
 
 Thanks for helping! The short version:
 

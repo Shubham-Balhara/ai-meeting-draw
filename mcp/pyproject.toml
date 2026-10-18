@@ -3,14 +3,14 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "noddle-draw-mcp"
+name = "ai-meeting-draw-mcp"
 version = "1.0.0"
-description = "MCP server (stdio) for noddle draw boards. Stdlib-only, no runtime dependencies."
+description = "MCP server (stdio) for AI Meeting Draw boards. Stdlib-only, no runtime dependencies."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
-authors = [{ name = "noddle contributors" }]
-keywords = ["mcp", "model-context-protocol", "diagram", "whiteboard", "noddle"]
+authors = [{ name = "AI Meeting Draw contributors" }]
+keywords = ["mcp", "model-context-protocol", "diagram", "whiteboard", "AI Meeting Draw"]
 dependencies = []
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -20,15 +20,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://draw.noddle.dev"
-Source = "https://github.com/noddle-dev/noddle-draw"
-Documentation = "https://github.com/noddle-dev/noddle-draw/tree/main/mcp"
+Homepage = "http://127.0.0.1:8000"
 
-# `uvx noddle-draw-mcp` runs the script named after the package;
-# `noddle-mcp` stays as the historical alias.
 [project.scripts]
-noddle-draw-mcp = "noddle_mcp:main"
-noddle-mcp = "noddle_mcp:main"
+ai-meeting-draw-mcp = "ai_meeting_draw_mcp:main"
 
 [tool.setuptools]
-py-modules = ["noddle_mcp"]
+py-modules = ["ai_meeting_draw_mcp"]

@@ -114,7 +114,7 @@ function SearchGlyph() {
   );
 }
 
-const SHELF_KEY = "noddle-lib-shelf";
+const SHELF_KEY = "ai-meeting-draw-lib-shelf";
 /** Pack order everywhere = shelf order (the chip row reads the same way). */
 const SHELF_ORDER = LIBRARY_SHELVES.flatMap((s) => s.packs.map((p) => p.id));
 

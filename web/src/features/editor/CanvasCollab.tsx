@@ -113,7 +113,7 @@ export function CanvasCollab() {
     ? queuedChats > 0
       ? `✦ Editing… (${queuedChats} messages waiting) — keep typing`
       : "✦ Editing… — keep typing, messages will queue up"
-    : "Ask AI-Noddle to edit the diagram…";
+    : "Ask AI Meeting Draw to edit the diagram…";
 
   return (
     <>

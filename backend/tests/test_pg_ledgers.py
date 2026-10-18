@@ -2,7 +2,7 @@
 ``PG_TEST_DSN`` points at a throwaway database — these need a real Postgres
 (the file-mode behavior is covered elsewhere).
 
-    PG_TEST_DSN=postgresql://postgres:test@127.0.0.1:55432/noddle \
+    PG_TEST_DSN=postgresql://postgres:test@127.0.0.1:55432/ai_meeting_draw \
         python -m pytest backend/tests/test_pg_ledgers.py -q
 """
 from __future__ import annotations

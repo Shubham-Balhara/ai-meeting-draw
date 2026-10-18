@@ -25,7 +25,7 @@ import { useLayers } from "../layers/useLayers";
 import { addImageToBoard } from "./pasteImage";
 
 // ---- stencil library picker (#19) — which icon libraries show in the panel.
-const LIBS_KEY = "noddle-stencil-libs";
+const LIBS_KEY = "ai-meeting-draw-stencil-libs";
 function loadEnabledLibs(): Set<string> {
   try {
     const raw = JSON.parse(localStorage.getItem(LIBS_KEY) ?? "null");

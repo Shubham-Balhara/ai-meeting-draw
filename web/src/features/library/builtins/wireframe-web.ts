@@ -15,7 +15,7 @@ function browser() {
   const d1 = box("ellipse", 16, 12, 16, 16, "", "rose");
   const d2 = box("ellipse", 40, 12, 16, 16, "", "lemon");
   const d3 = box("ellipse", 64, 12, 16, 16, "", "mint");
-  const url = box("rounded", 96, 8, 320, 24, "noddle.dev", H, { paper: true, fontSize: 12, bold: false, textColor: MUTED });
+  const url = box("rounded", 96, 8, 320, 24, "ai-meeting-draw.dev", H, { paper: true, fontSize: 12, bold: false, textColor: MUTED });
   const hint = text(24, 64, 432, 232, "Page content", { textColor: MUTED, bold: false });
   return item("ww-browser", "Browser Frame", ["window", "page", "chrome", "desktop", "screen"], [frame, bar, d1, d2, d3, url, hint], [], G);
 }

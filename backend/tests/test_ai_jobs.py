@@ -85,7 +85,7 @@ def test_submit_converts_and_creates_anonymous_board(tmp_path):
     nodes = doc.diagram.get("nodes") or doc.diagram.get("pages", [{}])[0].get("nodes")
     assert nodes and nodes[0]["kind"] == "rounded" and nodes[0]["text"] == "Start"
     # plus a server-rendered preview svg wrapped as a bake (stripped on open)
-    assert "noddle-diagram-baked" in doc.svg
+    assert "ai-meeting-draw-diagram-baked" in doc.svg
 
 
 def test_failure_records_error(tmp_path):

@@ -1,6 +1,6 @@
 /**
  * features/editor/boardExports — open-format text exports (#15): the whole
- * board as noddle diagram JSON and the active page as Mermaid. Raster/vector
+ * board as AI Meeting Draw diagram JSON and the active page as Mermaid. Raster/vector
  * exports (SVG/PNG/GIF/Deck) live in toolbar/useExport.
  */
 import { useDiagramStore } from "../../state/diagramStore";
@@ -17,7 +17,7 @@ function downloadText(filename: string, text: string, mime: string): void {
   URL.revokeObjectURL(url);
 }
 
-/** The whole board (all pages) as noddle's open diagram JSON — re-importable
+/** The whole board (all pages) as AI Meeting Draw's open diagram JSON — re-importable
  * via ☰ → Import file…. */
 export function exportBoardJson(title: string): void {
   const payload = boardDiagram();

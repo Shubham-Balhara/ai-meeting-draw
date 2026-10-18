@@ -71,7 +71,7 @@ export function setGuestName(name: string): void {
     color: getIdentity().color,
   };
   try {
-    localStorage.setItem("noddle-user", JSON.stringify(identity));
+    localStorage.setItem("ai-meeting-draw-user", JSON.stringify(identity));
   } catch {
     /* ignore */
   }
@@ -82,7 +82,7 @@ export function setGuestName(name: string): void {
  * Reads the old sessionStorage key as a migration. */
 export function getIdentity(): { name: string; color: string } {
   try {
-    const raw = localStorage.getItem("noddle-user") ?? sessionStorage.getItem("noddle-user");
+    const raw = localStorage.getItem("ai-meeting-draw-user") ?? sessionStorage.getItem("ai-meeting-draw-user");
     if (raw) {
       const v = JSON.parse(raw) as { name?: string; color?: string };
       if (v && typeof v.name === "string" && v.name) {
@@ -97,7 +97,7 @@ export function getIdentity(): { name: string; color: string } {
     color: COLORS[Math.floor(Math.random() * COLORS.length)],
   };
   try {
-    localStorage.setItem("noddle-user", JSON.stringify(identity));
+    localStorage.setItem("ai-meeting-draw-user", JSON.stringify(identity));
   } catch {
     /* storage blocked — a fresh ephemeral identity per read is fine */
   }

@@ -15,7 +15,7 @@ export function RightPanel() {
       <div className="ed-tabs bordered">
         <button className={`ed-tab${rightTab === "props" ? " active" : ""}`} onClick={() => setRightTab("props")}>Properties</button>
         <button className={`ed-tab${rightTab === "claude" ? " active" : ""}`} onClick={() => setRightTab("claude")}>
-          ✦ AI-Noddle <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ok)", display: "inline-block" }} />
+          ✦ AI Meeting Draw <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--ok)", display: "inline-block" }} />
         </button>
         {/* its own × — the ◧ toggle top-right is easy to miss */}
         <button

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# noddle — multi-stage build: React SPA (Vite) -> FastAPI runtime.
+# AI Meeting Draw — multi-stage build: React SPA (Vite) -> FastAPI runtime.
 #
 # Layout inside the image MIRRORS the repo (/app/backend, /app/web/dist)
 # because backend/app/config.py derives paths from the backend/ package root:
@@ -43,10 +43,10 @@ COPY --from=web-build /web/dist /app/web/dist
 # Non-root user. backend/storage is excluded by .dockerignore, so create it
 # here and hand it to the app user (the named volume inherits this ownership
 # on first use; the app also mkdir -p's subdirs itself).
-RUN useradd --create-home --uid 10001 noddle \
+RUN useradd --create-home --uid 10001 ai-meeting-draw \
     && mkdir -p /app/backend/storage \
-    && chown -R noddle:noddle /app/backend/storage
-USER noddle
+    && chown -R ai-meeting-draw:ai-meeting-draw /app/backend/storage
+USER ai-meeting-draw
 
 WORKDIR /app/backend
 EXPOSE 8000

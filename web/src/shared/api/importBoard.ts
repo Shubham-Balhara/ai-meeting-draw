@@ -2,7 +2,7 @@
  * shared/api/importBoard — one entry point for every importable format,
  * branching on extension (used by the editor's ☰ → Import file…):
  *   .svg → sanitize-upload · .drawio/.xml → server-side mxGraph parse ·
- *   .mmd → the Mermaid AI path · .json → noddle's own open format.
+ *   .mmd → the Mermaid AI path · .json → AI Meeting Draw's own open format.
  * Returns the NEW board's meta; the caller decides where to open it.
  */
 import { api, type DocMeta } from "./client";

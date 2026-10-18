@@ -2,7 +2,7 @@
  * features/diagram/icons — registry of glyphs for `icon`-kind diagram nodes.
  *
  * ⚠️ LICENSING: these are ORIGINAL, stylized geometric line-glyph PLACEHOLDERS
- * drawn in noddle's own style — they are NOT AWS / Databricks official icons and
+ * drawn in AI Meeting Draw's own style — they are NOT AWS / Databricks official icons and
  * intentionally do NOT reproduce any trademarked artwork. They only evoke the
  * service category (a chip, a bucket, a cylinder, stacked chevrons, …) so a
  * board reads at a glance. Swap for licensed icon sets before any real use.

@@ -2,7 +2,7 @@
 
 Handlers are thin: they validate/parse input, call the injected
 ``DocumentService``, translate domain errors to HTTP, and map domain models to
-DTOs. noddle is anonymous-only — the board URL is the capability, enforced
+DTOs. AI Meeting Draw is anonymous-only — the board URL is the capability, enforced
 through ``services.auth.can``:
 
     action "view" → GET one / export / versions
@@ -126,7 +126,7 @@ async def import_document(
     """Import a foreign diagram file as a NEW editable board.
 
     Supported today: draw.io / diagrams.net (``.drawio`` / ``.xml`` — plain or
-    deflate-compressed, multi-page → noddle pages). Mermaid ``.mmd`` files are
+    deflate-compressed, multi-page → AI Meeting Draw pages). Mermaid ``.mmd`` files are
     handled client-side through the existing text→diagram AI path; ``.vsdx``
     is a spike (docs/spikes). A preview SVG is baked so exports aren't blank
     before the first open+save."""
@@ -235,7 +235,7 @@ def export_svg(
     # the preview isn't blank. Boards that were opened+saved carry the baked
     # group and keep their richer client-rendered SVG.
     svg = doc.svg
-    if doc.diagram and "noddle-diagram-baked" not in svg:
+    if doc.diagram and "ai-meeting-draw-diagram-baked" not in svg:
         try:
             svg = diagram_to_svg(doc.diagram)
         except Exception:

@@ -1,4 +1,4 @@
-"""noddle backend — modular FastAPI package.
+"""AI Meeting Draw backend — modular FastAPI package.
 
 Layers (dependency rule: api → services → domain; infrastructure implements
 the domain port; domain imports nothing outward):

@@ -116,7 +116,7 @@ export function GenerateScreen() {
           <div className="gen-hero">
             <div className="mark">✦</div>
             <h1>What do you want to diagram?</h1>
-            <p>AI-Noddle drafts it in seconds — you refine it together on the canvas.</p>
+            <p>AI Meeting Draw drafts it in seconds — you refine it together on the canvas.</p>
           </div>
 
           <div className="gen-tabs">
@@ -244,7 +244,7 @@ function GenerateOverlay() {
     <div className="gen-overlay">
       <div className="gen-modal">
         <div className="sp" />
-        <div className="t">✦ AI-Noddle is drawing…</div>
+        <div className="t">✦ AI Meeting Draw is drawing…</div>
         <div className="d">{STEP_LABELS[genStep] ?? "Finishing up…"}</div>
         <div className="gen-progress"><span style={{ width: `${pct}%` }} /></div>
       </div>

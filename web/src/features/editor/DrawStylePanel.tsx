@@ -6,7 +6,7 @@
  * nodes, so it works both as "style for what I'm about to draw" and "restyle
  * what I just drew".
  *
- * Field mapping (noddle node model): Stroke → stroke, Background → fill,
+ * Field mapping (AI Meeting Draw node model): Stroke → stroke, Background → fill,
  * Stroke width → strokeWidth, Stroke style → strokeDash, Sloppiness → sketch,
  * Edges → cornerRadius, Opacity → opacity (1 ⇒ field removed).
  */

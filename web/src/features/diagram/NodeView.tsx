@@ -268,7 +268,7 @@ export function NodeView({
         {/* Hand-drawn look: a shared roughen filter jitters the shape edges;
             the text switches to a handwriting font. Filter id is global +
             idempotent (see SketchDefs, rendered once by DiagramLayer). */}
-        <g filter={node.sketch && node.kind !== "icon" ? "url(#noddle-sketch)" : undefined}>
+        <g filter={node.sketch && node.kind !== "icon" ? "url(#ai-meeting-draw-sketch)" : undefined}>
           {shapeElement(node)}
         </g>
         <text

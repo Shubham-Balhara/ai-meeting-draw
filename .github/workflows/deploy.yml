@@ -1,10 +1,10 @@
 # CI → Railway deploy (self-contained).
 #
-# noddle-draw is OPEN SOURCE, so unlike the private Noddle core repos it does
-# not call the central reusable workflow (noddle_artifact is private — forks
+# ai-meeting-draw is OPEN SOURCE, so unlike the private AI Meeting Draw core repos it does
+# not call the central reusable workflow (ai_meeting_draw_artifact is private — forks
 # couldn't resolve it). The logic below mirrors that workflow 1:1 and follows
-# the same governance (harness/deployment/README.md in noddle_artifact):
-#   * Railway project = repo name (noddle-draw); service = draw-web.
+# the same governance (harness/deployment/README.md in ai_meeting_draw_artifact):
+#   * Railway project = repo name (ai-meeting-draw); service = draw-web.
 #   * RAILWAY_TOKEN repo secret = Railway PROJECT token (never account token).
 #   * Railway auto-deploy from GitHub stays DISABLED — deploys go through this
 #     gate only (tests green → deploy).
@@ -14,7 +14,7 @@ name: deploy
 
 on:
   push:
-    branches: [main]
+    branches: [master, main]
   pull_request:
   workflow_dispatch:
 
@@ -46,7 +46,7 @@ jobs:
 
   deploy:
     needs: test
-    if: github.repository == 'noddle-dev/noddle-draw' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: vars.ENABLE_RAILWAY_DEPLOY == 'true' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

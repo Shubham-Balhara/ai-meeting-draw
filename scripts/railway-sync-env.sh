@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# railway-sync-env.sh — env-sync tool shared across Noddle repos.
+# railway-sync-env.sh — env-sync tool shared across AI Meeting Draw repos.
 # Pushes secrets/config from the root .env to Railway following the DECLARATIVE
 # manifest `railway.env.map` (edit the manifest, not this script). Anti-ad-hoc:
 #   - only pushes variables present in the manifest (per-service allowlist)

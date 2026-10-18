@@ -44,7 +44,7 @@ export function Toolbar() {
   return (
     <header className="topbar">
       <div className="brand">
-        <span className="logo">◆</span> noddle
+        <span className="logo">◆</span> AI Meeting Draw
         <span className="tag">react</span>
         {/* docName is derived from server meta; React escapes it on render */}
         <span className="doc-name">{docName}</span>

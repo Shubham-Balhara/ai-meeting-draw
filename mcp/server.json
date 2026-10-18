@@ -1,26 +1,26 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "dev.noddle/draw",
-  "title": "noddle draw",
-  "description": "Read, create and edit open-source noddle draw diagram boards, browse versions and comment.",
+  "name": "ai-meeting-draw",
+  "title": "AI Meeting Draw",
+  "description": "Read, create and edit open-source AI Meeting Draw diagram boards, browse versions and comment.",
   "version": "1.0.0",
-  "websiteUrl": "https://draw.noddle.dev",
+  "websiteUrl": "http://127.0.0.1:8000",
   "repository": {
-    "url": "https://github.com/noddle-dev/noddle-draw",
+    "url": "https://github.com/OWNER/ai-meeting-draw",
     "source": "github",
     "id": "1294749108",
     "subfolder": "mcp"
   },
   "icons": [
     {
-      "src": "https://draw.noddle.dev/logo-512.png",
+      "src": "http://127.0.0.1:8000/logo-512.png",
       "mimeType": "image/png",
       "sizes": [
         "512x512"
       ]
     },
     {
-      "src": "https://draw.noddle.dev/favicon.svg",
+      "src": "http://127.0.0.1:8000/favicon.svg",
       "mimeType": "image/svg+xml",
       "sizes": [
         "any"
@@ -30,7 +30,7 @@
   "packages": [
     {
       "registryType": "mcpb",
-      "identifier": "https://github.com/noddle-dev/noddle-draw/releases/download/mcpb-v1.0.0/noddle-draw.mcpb",
+      "identifier": "https://github.com/OWNER/ai-meeting-draw/releases/download/mcpb-v1.0.0/ai-meeting-draw.mcpb",
       "fileSha256": "12d4b05300b53cee0e75bae30fbd7e23df60f277aa752665b93e2d2947fc9147",
       "version": "1.0.0",
       "transport": {
@@ -38,19 +38,19 @@
       },
       "environmentVariables": [
         {
-          "name": "NODDLE_BASE_URL",
-          "description": "http(s) origin of the noddle draw instance. Set it to your own origin when self-hosting.",
-          "default": "https://draw.noddle.dev",
+          "name": "AI_MEETING_DRAW_BASE_URL",
+          "description": "http(s) origin of the AI Meeting Draw instance. Set it to your own origin when self-hosting.",
+          "default": "http://127.0.0.1:8000",
           "isRequired": false
         },
         {
-          "name": "NODDLE_AGENT_NAME",
+          "name": "AI_MEETING_DRAW_AGENT_NAME",
           "description": "Display name on the agent's comments and version snapshots (max 40 chars).",
           "default": "MCP agent",
           "isRequired": false
         },
         {
-          "name": "NODDLE_AI_PROVIDER",
+          "name": "AI_MEETING_DRAW_AI_PROVIDER",
           "description": "Optional bring-your-own-key provider for generate_diagram.",
           "choices": [
             "claude",
@@ -62,13 +62,13 @@
           "isRequired": false
         },
         {
-          "name": "NODDLE_AI_KEY",
-          "description": "Optional AI provider key, sent only to NODDLE_BASE_URL per call and never stored.",
+          "name": "AI_MEETING_DRAW_AI_KEY",
+          "description": "Optional AI provider key, sent only to AI_MEETING_DRAW_BASE_URL per call and never stored.",
           "isRequired": false,
           "isSecret": true
         },
         {
-          "name": "NODDLE_AI_MODEL",
+          "name": "AI_MEETING_DRAW_AI_MODEL",
           "description": "Optional model override for generate_diagram.",
           "isRequired": false
         }

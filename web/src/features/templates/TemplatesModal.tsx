@@ -221,7 +221,7 @@ export function TemplatesModal() {
             <div className="tpl-section-title">
               Create a diagram with AI{" "}
               <span
-                title="AI-Noddle drafts an editable diagram from your description"
+                title="AI Meeting Draw drafts an editable diagram from your description"
                 style={{ color: "var(--faint)", cursor: "help" }}
               >
                 ⓘ
@@ -242,7 +242,7 @@ export function TemplatesModal() {
               <div className="tpl-ai-actions">
                 <button
                   className="chat-send"
-                  title="Generate with AI-Noddle"
+                  title="Generate with AI Meeting Draw"
                   disabled={!aiPrompt.trim()}
                   onClick={submitAI}
                 >

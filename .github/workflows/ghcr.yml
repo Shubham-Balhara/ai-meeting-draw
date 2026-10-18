@@ -1,5 +1,5 @@
 # Build & publish the container image to GHCR on every release (and on
-# demand), so self-hosters can `docker run ghcr.io/noddle-dev/noddle-draw`
+# demand), so self-hosters can run the image published under this repository.
 # without cloning the repo. Multi-arch: amd64 + arm64 (Raspberry Pi/ARM VPS
 # are common in the self-host crowd).
 name: Publish image (GHCR)

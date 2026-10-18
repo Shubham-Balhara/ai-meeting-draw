@@ -120,11 +120,11 @@ const PATHS: Record<IconName, JSX.Element> = {
 
 /**
  * The NODDLE DRAW product mark — synced from
- * noddle_artifact/branding/product-icons/draw.svg (edit THERE first, then
+ * ai_meeting_draw_artifact/branding/product-icons/draw.svg (edit THERE first, then
  * mirror here + web/public/{logo,favicon}.svg): the family tile
  * (--color-logo-tile #211e19 — never a gradient) + Ember Orange dot
  * (--color-ember #ea580c) top-right, with draw's own glyph — a freehand
- * scribble stroke. The diamond nib now belongs to Noddle Board only, so the
+ * scribble stroke. The diamond nib now belongs to AI Meeting Draw only, so the
  * two products read as siblings, not twins. Drawn as real vector geometry so
  * it never renders "broken" at small sizes. Fills its `.brand-mark` box.
  */

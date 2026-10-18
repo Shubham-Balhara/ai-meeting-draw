@@ -1,7 +1,7 @@
 /**
  * features/templates/templates — REAL template definitions.
  *
- * Each template builds an editable board (noddle diagram nodes/edges). Picking
+ * Each template builds an editable board (AI Meeting Draw diagram nodes/edges). Picking
  * one creates a real document via POST /api/documents/new and navigates to its
  * /d/{id} URL — from there everything is the normal live-editable board.
  */

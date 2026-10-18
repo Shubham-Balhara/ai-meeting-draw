@@ -55,8 +55,8 @@ interface BoardChats {
 
 // ---- last-board persistence (the Excalidraw-style "/" behavior) -------------
 
-const LAST_BOARD_KEY = "noddle.lastBoardId";
-const RECENTS_KEY = "noddle.recentBoards";
+const LAST_BOARD_KEY = "ai-meeting-draw.lastBoardId";
+const RECENTS_KEY = "ai-meeting-draw.recentBoards";
 const RECENTS_CAP = 20;
 
 export interface RecentBoard {
@@ -263,12 +263,12 @@ function ensureBoard(chats: Record<string, BoardChats>, key: string): BoardChats
 }
 
 // The floating-island chrome is the ONLY editor UI (the docked "Full" layout
-// was retired). A stale `noddle-ui-mode` localStorage key from older builds is
+// was retired). A stale `ai-meeting-draw-ui-mode` localStorage key from older builds is
 // simply ignored — nothing reads it any more.
 
 // Chat sessions survive a page reload (per tab). Best-effort — quota/privacy
 // errors just mean an empty history.
-const CHATS_KEY = "noddle-chats-v2";
+const CHATS_KEY = "ai-meeting-draw-chats-v2";
 
 function loadChats(): Record<string, BoardChats> {
   try {
@@ -322,11 +322,11 @@ export const useAppStore = create<AppState>((set) => ({
   gridOn: true,
   snapOn: true,
   // default OFF (infinite canvas); only an explicit "1" turns it on
-  pageBackdrop: localStorage.getItem("noddle-page-backdrop") === "1",
+  pageBackdrop: localStorage.getItem("ai-meeting-draw-page-backdrop") === "1",
   togglePageBackdrop: () =>
     set((s) => {
       try {
-        localStorage.setItem("noddle-page-backdrop", s.pageBackdrop ? "0" : "1");
+        localStorage.setItem("ai-meeting-draw-page-backdrop", s.pageBackdrop ? "0" : "1");
       } catch {
         /* private mode */
       }

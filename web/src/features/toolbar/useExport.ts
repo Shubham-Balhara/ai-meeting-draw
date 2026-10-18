@@ -26,7 +26,7 @@ export type PngScale = (typeof PNG_SCALES)[number];
  * of the box (and roughly matches the old devicePixelRatio behavior on HiDPI). */
 const DEFAULT_PNG_SCALE: PngScale = 2;
 
-const EXPORT_SCALE_KEY = "noddle.exportScale";
+const EXPORT_SCALE_KEY = "ai-meeting-draw.exportScale";
 
 /** Coerce an arbitrary value to a valid PNG scale, defaulting to 2×. Also
  * guards callers that bind `onClick={exportPng}` (which would pass an event). */

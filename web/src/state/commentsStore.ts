@@ -20,7 +20,7 @@ import { getIdentity, onCollabComments } from "./collabStore";
 
 // Comment-layer visibility is a personal view preference — remember it across
 // reloads (not per board; it's how you like to work).
-const VIS_KEY = "noddle:comments-visible";
+const VIS_KEY = "ai-meeting-draw:comments-visible";
 function loadVisible(): boolean {
   try { return localStorage.getItem(VIS_KEY) !== "0"; } catch { return true; }
 }

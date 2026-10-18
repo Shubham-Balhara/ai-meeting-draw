@@ -1,4 +1,4 @@
-/* noddle — design tokens + globals (redesign: "NODDLE AI Draw Collaboration").
+/* AI Meeting Draw — design tokens + globals (redesign: "NODDLE AI Draw Collaboration").
  *
  * Two layers live here:
  *   1. The DESIGN SYSTEM — tokens, primitives and the three product screens
@@ -8,7 +8,7 @@
  *      .marquee, .text-edit, .edge-animated, .zoom-widget). These keep their
  *      exact contracts so the framework-agnostic engine keeps working.
  *
- * Brand language: noddle warm palette — cream paper + ink + orange accent; ✦ marks AI, ◇ is
+ * Brand language: AI Meeting Draw warm palette — cream paper + ink + orange accent; ✦ marks AI, ◇ is
  * the logo. Light theme only (design tokens intentionally single-theme).
  */
 
@@ -218,7 +218,7 @@ button {
   display: flex; align-items: center; gap: 9px;
   padding: 15px 16px 13px; border-bottom: 1px solid var(--border-faint);
 }
-/* Sizing box for the <BrandLogo/> SVG (the mark — noddle-style dark tile +
+/* Sizing box for the <BrandLogo/> SVG (the mark — ai-meeting-draw-style dark tile +
    white diamond + orange dot — is drawn as vector geometry in
    shared/ui/Icon.tsx, so it never renders broken at small sizes). */
 .brand-mark {
@@ -1985,7 +1985,7 @@ code { background: var(--panel-2); border: 1px solid var(--border); padding: 1px
 .kbd-dialog-keys i { font-style: normal; color: #7a8399; font-size: 11px; }
 
 /* ==========================================================================
-   AI-Noddle chat — redesign (2026-10-03): calm white surfaces, violet
+   AI Meeting Draw chat — redesign (2026-10-03): calm white surfaces, violet
    accent (#6965db, the editor selection colour), ONE composer card that
    carries attach · Draw/Ask · Thinking · send, a friendly empty state with
    starter cards instead of a wall-of-text welcome.

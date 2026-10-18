@@ -164,7 +164,7 @@ export function DiagramLayer() {
         ))}
         {/* Excalidraw-style hand-drawn roughen — turbulence + displacement.
             Shared by every node with `sketch: true`. */}
-        <filter id="noddle-sketch" x="-5%" y="-5%" width="110%" height="110%">
+        <filter id="ai-meeting-draw-sketch" x="-5%" y="-5%" width="110%" height="110%">
           <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="7" result="n" />
           <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G" />
         </filter>

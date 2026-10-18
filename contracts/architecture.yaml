@@ -1,14 +1,14 @@
 # yaml-language-server: $schema=./schemas/architecture.schema.json
 #
-# Architecture contract for noddle draw — layers, file ownership, persistence,
+# Architecture contract for AI Meeting Draw — layers, file ownership, persistence,
 # operations, decisions. Recorded from the repo as it stands (contract-first
 # adoption, 2026-08-16). The ADRs below migrate the standing "Hard rules" from
 # CLAUDE.md into decision records with rationale; CLAUDE.md points here.
 #
-# PUBLIC MIT REPO: nothing private (credentials, other Noddle products'
+# PUBLIC MIT REPO: nothing private (credentials, other AI Meeting Draw products'
 # internals, customer data) may enter this file or this repo.
 meta:
-  name: noddle draw
+  name: AI Meeting Draw
   version: "1.0"
   style: >-
     clean-architecture monolith — FastAPI (api → services → domain, with
@@ -51,7 +51,7 @@ principles:
     rule: >-
       English only, public repo: code, comments, UI strings, commits and docs
       are English; no hardcoded locales in date/number formatting; no
-      credentials or private Noddle internals ever land here.
+      credentials or private AI Meeting Draw internals ever land here.
   - id: P-07
     rule: >-
       web/src/editor-core is pure TypeScript (no React, no DOM globals);
@@ -161,7 +161,7 @@ ownership:
   - file: backend/app/api/ai_schemas.py
     owner: AGENT-API
     role: AI DTOs (EditDiagramBody mode enum, chat-image validation)
-  - file: mcp/noddle_mcp.py
+  - file: mcp/ai_meeting_draw_mcp.py
     owner: AGENT-API
     role: stdlib MCP server — thin stdio wrapper over the REST API, no tokens
   - file: web/src/editor-core/diagram/types.ts
@@ -254,7 +254,7 @@ runtime:
        ├──► AIService ──► BYOK provider (per-request X-AI-* headers)
        │        └─ no key → Databricks pool → FreePool (OpenRouter) → 503
        └──► ObjectStorage (optional, log segments only)
-    mcp/noddle_mcp.py (stdio) ──► the same REST API
+    mcp/ai_meeting_draw_mcp.py (stdio) ──► the same REST API
   local: >-
     Backend — python3 -m venv .venv, pip install -r backend/requirements.txt,
     cd backend && uvicorn main:app --reload --port 8000. Frontend — cd web &&
@@ -272,7 +272,7 @@ deploy:
     railway.env.map + scripts/railway-sync-env.sh, never ad-hoc.
   agent_may_deploy: false
   paths:
-    - name: production (draw.noddle.dev)
+    - name: configured production deployment
       who: pipeline
       preconditions:
         - python -m pytest backend/tests -q is green
@@ -308,9 +308,9 @@ commands:
 config:
   # Every variable is OPTIONAL — zero-config still runs (file storage, AI off).
   # .env.example documents the self-hoster subset; this list is exhaustive.
-  NODDLE_PORT: docker compose host port (default 8000)
+  AI_MEETING_DRAW_PORT: docker compose host port (default 8000)
   DATABASE_URL: Postgres persistence; absent/unreachable → file storage under backend/storage/
-  NODDLE_ALLOWED_ORIGINS: CORS allowlist for dev tooling (prod is same-origin)
+  AI_MEETING_DRAW_ALLOWED_ORIGINS: CORS allowlist for dev tooling (prod is same-origin)
   PLAUSIBLE_DOMAIN: opt-in cookieless analytics — injects the snippet into the SPA shell
   PLAUSIBLE_SRC: script host override for self-hosted Plausible
   DATABRICKS_HOST: shared AI pool (operator-sponsored), with DATABRICKS_TOKEN
@@ -418,10 +418,10 @@ decisions:
     choice: >-
       All code, comments, UI strings, commits and docs are English; no
       hardcoded locales in formatting; no credentials, customer data or other
-      Noddle products' internals may enter this repo.
+      AI Meeting Draw products' internals may enter this repo.
     rationale: >-
       This is a public MIT repo with outside readers and contributors; the
-      rest of the Noddle workspace is private and must not leak into it.
+      rest of the AI Meeting Draw workspace is private and must not leak into it.
     alternatives_rejected:
       - Bilingual comments (splits the audience, invites private-context leaks)
     consequences:

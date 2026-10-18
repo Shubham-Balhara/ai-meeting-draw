@@ -42,7 +42,7 @@ from app.services.ai import (
 from app.services.diagram_render import diagram_to_svg
 from app.services.documents import DocumentService
 
-logger = logging.getLogger("noddle.ai_jobs")
+logger = logging.getLogger("ai_meeting_draw.ai_jobs")
 
 _MAX_PER_USER = 50  # history cap (file fallback prunes at write, Pg at read)
 _WORKERS = 3  # parallel conversions — users must not wait for each other

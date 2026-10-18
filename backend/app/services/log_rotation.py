@@ -16,7 +16,7 @@ from pathlib import Path
 
 from app.services.object_storage import ObjectStorage
 
-logger = logging.getLogger("noddle")
+logger = logging.getLogger("ai_meeting_draw")
 
 MAX_LOG_BYTES = 10 * 1024 * 1024  # rotate at 10MB
 KEEP_LOCAL_SEGMENTS = 3

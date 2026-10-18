@@ -359,9 +359,9 @@ export function SimpleChrome() {
   // Browser tab: just the board, then the product — short enough to read in
   // a crowded tab strip (it used to be the long marketing tagline).
   useEffect(() => {
-    document.title = `${title} · Noddle`;
+    document.title = `${title} · AI Meeting Draw`;
     return () => {
-      document.title = "noddle draw";
+      document.title = "AI Meeting Draw";
     };
   }, [title]);
   const canSave = !!docId && myRole !== "viewer";
@@ -581,7 +581,7 @@ export function SimpleChrome() {
         </button>
         <button
           className={`simple-island simple-sq${panelOpen ? " active" : ""}`}
-          title="Properties & AI-Noddle panel"
+          title="Properties & AI Meeting Draw panel"
           aria-label="Properties and AI panel"
           aria-expanded={panelOpen}
           onClick={() => setPanelOpen(!panelOpen)}

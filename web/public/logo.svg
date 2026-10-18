@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="512" height="512">
-  <!-- NODDLE DRAW product icon (synced from noddle_artifact/branding/
+  <!-- NODDLE DRAW product icon (synced from ai_meeting_draw_artifact/branding/
        product-icons/draw.svg — edit there first): family tile #211e19 +
        ember dot #ea580c, glyph = freehand scribble stroke. The master
-       diamond mark now belongs to Noddle Board only. -->
+       diamond mark now belongs to AI Meeting Draw only. -->
   <rect x="0" y="0" width="32" height="32" rx="9" fill="#211e19"/>
   <path d="M8 21 C 10 12, 14 12, 15.5 16.5 C 17 21, 20 21.5, 23 13.5"
         fill="none" stroke="#fff" stroke-width="2.4"
