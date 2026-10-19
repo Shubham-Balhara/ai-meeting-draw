@@ -38,14 +38,21 @@ class ProviderConfig:
     retry_max_seconds: float = 12.0
     ollama_num_ctx: int = 16384
     ollama_think: bool = True
+    gemini_backend: str = "developer"
+    google_cloud_project: str | None = None
+    google_cloud_location: str = "global"
 
     def validate(self) -> None:
         if self.provider not in {"gemini", "grok", "groq", "qwen"}:
             raise ValueError("provider must be gemini, grok, groq, or qwen")
         if not self.model:
             raise ValueError("model is required")
-        if self.provider in {"gemini", "grok", "groq"} and not self.api_key:
+        if self.provider in {"grok", "groq"} and not self.api_key:
             raise ValueError(f"api_key is required for {self.provider}")
+        if self.provider == "gemini" and self.gemini_backend == "developer" and not self.api_key:
+            raise ValueError("api_key is required for Gemini developer API")
+        if self.provider == "gemini" and self.gemini_backend == "vertex" and not self.google_cloud_project:
+            raise ValueError("google_cloud_project is required for Vertex AI")
         if self.timeout_seconds <= 0 or self.retry_attempts < 1:
             raise ValueError("timeout must be positive and retry_attempts must be at least one")
 
@@ -172,7 +179,10 @@ class GeminiProvider(IntelligenceProvider):
         super().__init__(config)
         from google import genai
 
-        kwargs: dict[str, Any] = {"api_key": config.api_key}
+        kwargs: dict[str, Any] = (
+            {"vertexai": True, "project": config.google_cloud_project, "location": config.google_cloud_location}
+            if config.gemini_backend == "vertex" else {"api_key": config.api_key}
+        )
         if config.base_url:
             from google.genai import types
             kwargs["http_options"] = types.HttpOptions(base_url=config.base_url)

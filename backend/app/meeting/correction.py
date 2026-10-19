@@ -161,7 +161,11 @@ class CorrectionProvider:
         if self.config.provider == "gemini":
             from google import genai
             from google.genai import types
-            if self.client is None: self.client = genai.Client(api_key=self.config.api_key)
+            if self.client is None:
+                self.client=(genai.Client(vertexai=True,project=self.config.google_cloud_project,
+                                          location=self.config.google_cloud_location)
+                             if self.config.gemini_backend=="vertex"
+                             else genai.Client(api_key=self.config.api_key))
             response = await self.client.aio.models.generate_content(
                 model=self.config.model, contents=payload,
                 config=types.GenerateContentConfig(system_instruction=CORRECTION_SYSTEM_PROMPT,

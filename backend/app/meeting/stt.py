@@ -113,8 +113,13 @@ class GeminiSTTTranscriber(Transcriber):
         from google import genai
         self.model = settings.gemini_stt_model
         self._settings = settings
-        self._client = genai.Client(api_key=settings.gemini_api_key)
+        self._client = (genai.Client(vertexai=True, project=settings.firestore_project_id,
+                                    location=settings.google_cloud_location)
+                        if settings.gemini_backend == "vertex"
+                        else genai.Client(api_key=settings.gemini_api_key))
         self._lock = asyncio.Lock()
+        logger.info("Gemini STT client configured backend=%s location=%s",
+                    settings.gemini_backend,settings.google_cloud_location)
 
     async def transcribe(self, pcm: bytes) -> STTResult:
         from google.genai import types

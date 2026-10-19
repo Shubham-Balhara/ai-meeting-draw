@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, TypeVar
 
 from .persistence_schema import MIGRATIONS
+from .firestore_mirror import FirestoreMirror
 
 T = TypeVar("T")
 logger = logging.getLogger("ai_meeting_draw.meeting.storage")
@@ -36,7 +37,8 @@ def _json(value: Any) -> str:
 class MeetingStore:
     """A single-connection async facade; all SQLite access is serialized off-loop."""
 
-    def __init__(self, path: str | Path, *, busy_timeout_ms: int = 5000, synchronous: str = "NORMAL"):
+    def __init__(self, path: str | Path, *, busy_timeout_ms: int = 5000, synchronous: str = "NORMAL",
+                 firestore: FirestoreMirror | None = None):
         self.path = Path(path)
         self.busy_timeout_ms = busy_timeout_ms
         self.synchronous = synchronous.upper()
@@ -44,6 +46,8 @@ class MeetingStore:
             raise ValueError("synchronous must be OFF, NORMAL, FULL, or EXTRA")
         self._connection: sqlite3.Connection | None = None
         self._lock = asyncio.Lock()
+        self.firestore = firestore or FirestoreMirror(enabled=False)
+        self._recording_meetings: dict[str, str] = {}
 
     async def open(self) -> "MeetingStore":
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -52,6 +56,7 @@ class MeetingStore:
                 self._connection = await asyncio.to_thread(self._connect)
                 await asyncio.to_thread(self._migrate, self._connection)
                 logger.info("Meeting database opened path=%s", self.path)
+        await self.firestore.open()
         return self
 
     def _connect(self) -> sqlite3.Connection:
@@ -82,6 +87,7 @@ class MeetingStore:
                 connection, self._connection = self._connection, None
                 await asyncio.to_thread(connection.close)
                 logger.info("Meeting database closed path=%s", self.path)
+        await self.firestore.close()
 
     async def _run(self, operation: Callable[[sqlite3.Connection], T]) -> T:
         async with self._lock:
@@ -115,6 +121,13 @@ class MeetingStore:
              intelligence_provider, intelligence_model, now, now),
         )
         logger.info("Meeting created meeting_id=%s external_id=%s", meeting_id, external_id)
+        await self.firestore.meeting_created(meeting_id, {
+            "id": meeting_id, "external_id": external_id, "title": title,
+            "status": "active", "started_at": now, "updated_at": now,
+            "client_metadata": client_metadata or {},
+            "intelligence_provider": intelligence_provider,
+            "intelligence_model": intelligence_model,
+        })
         return meeting_id
 
     async def start_pipeline_run(
@@ -239,6 +252,7 @@ class MeetingStore:
     async def finish_meeting(self, meeting_id: str, status: str = "completed", *, ended_at: str | None = None) -> None:
         now = ended_at or utc_now()
         await self._write("UPDATE meetings SET status=?, ended_at=?, updated_at=? WHERE id=?", (status, now, now, meeting_id))
+        await self.firestore.meeting_finished(meeting_id, {"status": status, "ended_at": now, "updated_at": now})
         logger.info("Meeting finalized meeting_id=%s status=%s", meeting_id, status)
 
     async def create_recording(self, meeting_id: str, file_path: str, stt_provider: str, *,
@@ -250,11 +264,22 @@ class MeetingStore:
             (recording_id, meeting_id, file_path, mime_type, stt_provider, stt_model, "active", now),
         )
         logger.info("Recording created recording_id=%s meeting_id=%s", recording_id, meeting_id)
+        self._recording_meetings[recording_id] = meeting_id
+        await self.firestore.recording_upserted(meeting_id, recording_id, {
+            "id": recording_id, "meeting_id": meeting_id, "mime_type": mime_type,
+            "stt_provider": stt_provider, "stt_model": stt_model,
+            "status": "active", "started_at": now,
+        })
         return recording_id
 
     async def update_recording_progress(self, recording_id: str, *, bytes_received: int, chunks_received: int) -> None:
         await self._write("UPDATE recordings SET bytes_received=?, chunks_received=? WHERE id=?",
                           (bytes_received, chunks_received, recording_id))
+        meeting_id = self._recording_meetings.get(recording_id)
+        if meeting_id:
+            await self.firestore.recording_upserted(meeting_id, recording_id, {
+                "bytes_received": bytes_received, "chunks_received": chunks_received,
+            })
 
     async def finish_recording(self, recording_id: str, *, status: str = "completed", duration_ms: int | None = None,
                                bytes_received: int | None = None, chunks_received: int | None = None,
@@ -266,6 +291,12 @@ class MeetingStore:
             (status, ended_at or utc_now(), duration_ms, bytes_received, chunks_received, sha256, recording_id),
         )
         logger.info("Recording finalized recording_id=%s status=%s", recording_id, status)
+        meeting_id = self._recording_meetings.get(recording_id)
+        if meeting_id:
+            await self.firestore.recording_upserted(meeting_id, recording_id, {
+                "status": status, "ended_at": ended_at or utc_now(), "duration_ms": duration_ms,
+                "bytes_received": bytes_received, "chunks_received": chunks_received, "sha256": sha256,
+            })
 
     async def add_transcript(self, *, meeting_id: str, recording_id: str, sequence: int,
                              start_ms: int, end_ms: int, text: str, provider: str,
@@ -301,6 +332,14 @@ class MeetingStore:
                 connection.rollback()
                 raise
         inserted = await self._run(operation)
+        if inserted:
+            await self.firestore.transcript_added(meeting_id, recording_id, sequence, {
+                "meeting_id": meeting_id, "recording_id": recording_id, "sequence": sequence,
+                "start_ms": start_ms, "end_ms": end_ms, "captured_at": captured_at,
+                "text": text, "normalized_text": normalized_text, "provider": provider,
+                "model": model, "language": language, "confidence": confidence,
+                "is_final": is_final, "created_at": now,
+            })
         logger.debug("Transcript stored recording_id=%s sequence=%d inserted=%s", recording_id, sequence, inserted)
         return inserted
 
@@ -425,7 +464,15 @@ class MeetingStore:
             except BaseException:
                 connection.rollback()
                 raise
-        return await self._run(operation)
+        revision = await self._run(operation)
+        await self.firestore.correction_added(meeting_id, correction_id, {
+            "id": correction_id, "transcript_id": transcript_id, "revision": revision,
+            "raw_text": raw_text, "corrected_text": corrected_text, "changed": changed,
+            "edits": edits, "unresolved": unresolved, "confidence": confidence,
+            "provider": provider, "model": model, "prompt_version": prompt_version,
+            "created_at": utc_now(),
+        })
+        return revision
 
     async def latest_corrections(self, meeting_id: str) -> list[dict[str, Any]]:
         return await self.fetch_all(
@@ -474,7 +521,12 @@ class MeetingStore:
                 return base_version + 1
             except BaseException:
                 connection.rollback(); raise
-        return await self._run(operation_fn)
+        version = await self._run(operation_fn)
+        await self.firestore.architecture_updated(meeting_id, {
+            "meeting_id": meeting_id, "version": version, "graph": graph_payload,
+            "last_mutation_id": mutation_id, "updated_at": utc_now(),
+        })
+        return version
 
     async def meeting(self, meeting_id: str) -> dict[str, Any] | None:
         rows = await self.fetch_all("SELECT * FROM meetings WHERE id=?", (meeting_id,))

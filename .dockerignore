@@ -16,6 +16,9 @@ web/dist
 # Local runtime data — never bake into the image (Dockerfile mkdir's it;
 # the app also creates it on demand). Mounted as a named volume in compose.
 backend/storage
+backend/data
+backend/recordings
+backend/transcripts
 
 # Not needed by the image
 docs

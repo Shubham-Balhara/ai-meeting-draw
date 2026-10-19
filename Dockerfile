@@ -32,6 +32,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# FFmpeg continuously decodes browser WebM/Opus into 16 kHz mono PCM.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 # Deps first (cache-friendly): picks up any change to requirements.txt
 # (e.g. psycopg[binary]) automatically.
 COPY backend/requirements.txt /app/backend/requirements.txt
@@ -39,13 +44,17 @@ RUN pip install --no-cache-dir -r /app/backend/requirements.txt
 
 COPY backend/ /app/backend/
 COPY --from=web-build /web/dist /app/web/dist
+# Ship the zero-build browser capture helper with the deployed SPA.  Serving it
+# from the same origin keeps the WebSocket endpoint configuration automatic.
+COPY tools/meeting-capture/index.html /app/web/dist/capture/index.html
 
 # Non-root user. backend/storage is excluded by .dockerignore, so create it
 # here and hand it to the app user (the named volume inherits this ownership
 # on first use; the app also mkdir -p's subdirs itself).
 RUN useradd --create-home --uid 10001 ai-meeting-draw \
-    && mkdir -p /app/backend/storage \
-    && chown -R ai-meeting-draw:ai-meeting-draw /app/backend/storage
+    && mkdir -p /app/backend/storage /app/backend/data /app/backend/recordings /app/backend/transcripts \
+    && chown -R ai-meeting-draw:ai-meeting-draw \
+       /app/backend/storage /app/backend/data /app/backend/recordings /app/backend/transcripts
 USER ai-meeting-draw
 
 WORKDIR /app/backend

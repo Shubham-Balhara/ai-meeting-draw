@@ -50,6 +50,8 @@ class MeetingSettings:
         "STT_HOTWORDS", "Kafka,Kubernetes,PostgreSQL,Redis,gRPC,GraphQL,WebSocket,microservice,API gateway"
     ))
     gemini_api_key: str | None = field(default_factory=lambda: os.getenv("GEMINI_API_KEY") or None)
+    gemini_backend: str = field(default_factory=lambda: os.getenv("GEMINI_BACKEND", "developer").lower())
+    google_cloud_location: str = field(default_factory=lambda: os.getenv("GOOGLE_CLOUD_LOCATION", "global"))
     gemini_stt_model: str = field(default_factory=lambda: os.getenv("GEMINI_MODEL", "gemini-3.8-flash"))
     segment_seconds: float = field(default_factory=lambda: float(os.getenv("SEGMENT_SECONDS", "8")))
     segment_overlap_seconds: float = field(default_factory=lambda: float(os.getenv("SEGMENT_OVERLAP_SECONDS", "1")))
@@ -94,16 +96,27 @@ class MeetingSettings:
     database_path: Path = field(default_factory=lambda: Path(os.getenv("MEETING_DATABASE_PATH", str(BACKEND_ROOT / "data" / "meetings.sqlite3"))))
     recordings_dir: Path = field(default_factory=lambda: Path(os.getenv("RECORDINGS_DIR", str(BACKEND_ROOT / "recordings"))))
     transcript_export_dir: Path = field(default_factory=lambda: Path(os.getenv("TRANSCRIPT_EXPORT_DIR", str(BACKEND_ROOT / "transcripts"))))
+    firestore_enabled: bool = field(default_factory=lambda: _bool("FIRESTORE_ENABLED", False))
+    firestore_required: bool = field(default_factory=lambda: _bool("FIRESTORE_REQUIRED", False))
+    firestore_project_id: str | None = field(default_factory=lambda: os.getenv("GOOGLE_CLOUD_PROJECT") or os.getenv("GCP_PROJECT") or None)
+    firestore_database: str = field(default_factory=lambda: os.getenv("FIRESTORE_DATABASE", "(default)"))
+    firestore_collection: str = field(default_factory=lambda: os.getenv("FIRESTORE_MEETINGS_COLLECTION", "meetings"))
 
     def validate(self) -> None:
         if self.stt_provider not in {"whisper", "gemini"}:
             raise ValueError("STT_PROVIDER must be whisper or gemini")
         if self.intelligence_provider not in {"gemini", "grok", "groq", "qwen"}:
             raise ValueError("INTELLIGENCE_PROVIDER must be gemini, grok, groq, or qwen")
-        if self.stt_provider == "gemini" and not self.gemini_api_key:
+        if self.gemini_backend not in {"developer", "vertex"}:
+            raise ValueError("GEMINI_BACKEND must be developer or vertex")
+        if self.gemini_backend == "vertex" and not self.firestore_project_id:
+            raise ValueError("GOOGLE_CLOUD_PROJECT is required for Vertex AI")
+        if self.stt_provider == "gemini" and self.gemini_backend == "developer" and not self.gemini_api_key:
             raise ValueError("GEMINI_API_KEY is required for Gemini STT")
-        if self.intelligence_enabled and self.intelligence_provider in {"gemini", "grok", "groq"} and not self.intelligence_api_key:
+        if self.intelligence_enabled and self.intelligence_provider in {"grok", "groq"} and not self.intelligence_api_key:
             raise ValueError("An intelligence API key is required for the selected provider")
+        if self.intelligence_enabled and self.intelligence_provider == "gemini" and self.gemini_backend == "developer" and not self.intelligence_api_key:
+            raise ValueError("GEMINI_API_KEY is required for Gemini intelligence with the developer backend")
         if self.correction_provider not in {"gemini", "grok", "groq", "qwen"}:
             raise ValueError("CORRECTION_PROVIDER must be gemini, grok, groq, or qwen")
         if not 0 <= self.correction_confidence_threshold <= 1:
@@ -125,3 +138,5 @@ class MeetingSettings:
             raise ValueError("OLLAMA_NUM_CTX must be at least 4096")
         if not 0 <= self.whisperx_vad_onset <= 1 or not 0 <= self.whisperx_vad_offset <= 1:
             raise ValueError("WhisperX VAD onset and offset must be between 0 and 1")
+        if self.firestore_required and not self.firestore_enabled:
+            raise ValueError("FIRESTORE_REQUIRED requires FIRESTORE_ENABLED=true")

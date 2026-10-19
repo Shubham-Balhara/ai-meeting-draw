@@ -53,7 +53,7 @@ def _default_origins() -> list[str]:
 class Settings:
     """Runtime configuration."""
 
-    storage_dir: Path = field(default_factory=lambda: BACKEND_ROOT / "storage")
+    storage_dir: Path = field(default_factory=lambda: Path(os.environ.get("STORAGE_DIR", str(BACKEND_ROOT / "storage"))))
     log_level: str = field(default_factory=lambda: os.environ.get("LOG_LEVEL", "INFO").upper())
     allowed_origins: list[str] = field(default_factory=_default_origins)
     # Optional privacy-friendly analytics: set PLAUSIBLE_DOMAIN (e.g.

@@ -1,6 +1,7 @@
 fastapi==0.115.6
 uvicorn[standard]==0.34.0
 google-genai>=1.0,<2
+google-cloud-firestore>=2.19,<3
 httpx>=0.27,<1
 python-multipart==0.0.20
 # Hardened XML parsing for untrusted uploads (SVG sanitizer + draw.io import):
