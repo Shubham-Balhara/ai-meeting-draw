@@ -46,7 +46,10 @@ ENABLE_DIAGRAM_MAPPER_V2=true
 LOG_LEVEL=DEBUG
 ```
 
-For Gemini STT, use `STT_PROVIDER=gemini`, set `GEMINI_API_KEY`, and choose a model currently available to that key. Model availability and free-tier quotas can vary by account and region; verify models in Google AI Studio instead of relying on a hard-coded name.
+For Gemini through Vertex AI, use `STT_PROVIDER=gemini`, `GEMINI_BACKEND=vertex`,
+`GOOGLE_CLOUD_PROJECT`, and `GOOGLE_CLOUD_LOCATION=global`. Cloud Run uses its runtime service
+account, so no API key is required. For the Gemini Developer API instead, set
+`GEMINI_BACKEND=developer` and `GEMINI_API_KEY`.
 
 For GroqCloud intelligence, use provider `groq`, `https://api.groq.com/openai/v1`, a supported Groq model, and the Groq API key. Provider `grok` means the separate xAI API.
 
@@ -148,6 +151,8 @@ Run the editor/backend and PostgreSQL with `docker compose up --build`. The ML-h
 - Keep `PROMPT_LOGGING=false` outside controlled debugging because prompts can contain meeting content.
 
 See `docs/meeting-intelligence.md`, `docs/MEETING_INTELLIGENCE_RUNBOOK.md`, and `docs/CLEANUP_CANDIDATES.md` for more detail.
+
+For the hackathon Google Cloud deployment—Cloud Run, Gemini Secret Manager configuration, and Firestore persistence—follow `docs/CLOUD_RUN_DEPLOYMENT.md` or run `scripts/deploy-cloud-run.sh`.
 
 ## License
 

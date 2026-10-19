@@ -170,6 +170,13 @@ code will insert the topic and consume edge. A service storing data in a databas
 standalone explicitly introduced services. Do not repeat facts solely from prior context. Do not
 invent components, prose, IDs, evidence, status, provenance, or diagram styling."""
 
+LOCAL_EXTRACTION_JSON_INSTRUCTION="""Return exactly one JSON object with this shape:
+{"components":[{"name":"component name","kind":"service|database|topic"}],
+ "relationships":[{"source":"source name","target":"target name",
+ "kind":"synchronous_call|asynchronous_publish|asynchronous_consume|write",
+ "technology":"technology name or null"}]}
+Use empty arrays when no explicit facts exist. Do not return markdown or additional keys."""
+
 
 def _clean_local_transcript(text:str)->str:
     """Conservatively repair common Whisper word-boundary damage before local extraction."""
@@ -363,13 +370,30 @@ class ArchitectureAgentProvider:
         if self.config.provider=="gemini":
             from google import genai
             from google.genai import types
-            if self.client is None:self.client=genai.Client(api_key=self.config.api_key)
-            response=await self.client.aio.models.generate_content(model=self.config.model,contents=payload,
-                config=types.GenerateContentConfig(system_instruction=ARCHITECTURE_AGENT_PROMPT,temperature=0,
-                    response_mime_type="application/json",response_json_schema=ArchitectureAgentResult.model_json_schema()))
-            result=ArchitectureAgentResult.model_validate_json(response.text)
-            logger.info("Architecture provider response accepted meeting_id=%s classification=%s mutations=%d",
-                        request.meeting_id,result.classification,len(result.mutations))
+            if self.client is None:
+                self.client=(genai.Client(vertexai=True,project=self.config.google_cloud_project,
+                                          location=self.config.google_cloud_location)
+                             if self.config.gemini_backend=="vertex"
+                             else genai.Client(api_key=self.config.api_key))
+            # The complete mutation schema is deeply nested and exceeds the structured-output
+            # subset accepted by some Gemini Flash releases (reported only as INVALID_ARGUMENT).
+            # Ask Gemini for a compact fact extraction, then compile IDs, evidence, defaults and
+            # mutations deterministically.  This is also substantially cheaper in output tokens.
+            current_ids=set(request.new_transcript_ids)
+            current_text=" ".join(item.text for item in request.transcripts
+                                  if item.transcript_id in current_ids)
+            compact_payload=LOCAL_EXTRACTION_JSON_INSTRUCTION+"\n"+json.dumps({"current_transcript":current_text},ensure_ascii=False)
+            if repair_feedback:
+                compact_payload+=f"\nPrevious extraction could not be compiled safely: {repair_feedback}. Return a corrected extraction."
+            logger.info("Gemini compact extraction started meeting_id=%s transcript_ids=%s characters=%d",
+                        request.meeting_id,request.new_transcript_ids,len(current_text))
+            response=await self.client.aio.models.generate_content(model=self.config.model,contents=compact_payload,
+                config=types.GenerateContentConfig(system_instruction=LOCAL_EXTRACTION_PROMPT,temperature=0,
+                    response_mime_type="application/json"))
+            extraction=LocalArchitectureExtraction.model_validate_json(response.text)
+            result=_local_extraction_to_result(request,extraction)
+            logger.info("Gemini compact extraction accepted meeting_id=%s components=%d relationships=%d mutations=%d",
+                        request.meeting_id,len(extraction.components),len(extraction.relationships),len(result.mutations))
             return result
         if self.client is None:
             base=self.config.base_url or ("http://127.0.0.1:11434" if self.config.provider=="qwen" else "")
@@ -508,9 +532,11 @@ ArchitectureErrorCallback=Callable[[Exception,AgentTranscript],Awaitable[None]]
 class ArchitectureCoordinator:
     """Ordered, stateful, nonblocking meeting architecture processor."""
     def __init__(self,meeting_id:str,agent:StatefulArchitectureAgent,initial_graph:ArchitectureGraph,
-                 callback:ArchitectureCallback,*,on_error:ArchitectureErrorCallback|None=None,queue_size:int=64,context_size:int=20):
+                 callback:ArchitectureCallback,*,on_error:ArchitectureErrorCallback|None=None,queue_size:int=64,
+                 context_size:int=20,batch_seconds:float=0):
         self.meeting_id=meeting_id;self.agent=agent;self.graph=initial_graph;self.callback=callback;self.on_error=on_error
         self.queue:asyncio.Queue[AgentTranscript|None]=asyncio.Queue(queue_size);self.context:deque[AgentTranscript]=deque(maxlen=context_size);self.task=None
+        self.batch_seconds=max(0,batch_seconds)
     async def start(self):
         if self.task is None:
             self.task=asyncio.create_task(self._run(),name=f"architecture:{self.meeting_id}")
@@ -529,15 +555,29 @@ class ArchitectureCoordinator:
     async def _run(self):
         while True:
             item=await self.queue.get()
+            batch:list[AgentTranscript]=[]
+            stop_after_batch=False
             try:
                 if item is None:return
-                self.context.append(item);before=self.graph
-                logger.info("Architecture transcript processing meeting_id=%s transcript_id=%d sequence=%d base_version=%d",
-                            self.meeting_id,item.transcript_id,item.sequence,before.version)
+                batch.append(item)
+                if self.batch_seconds:
+                    deadline=asyncio.get_running_loop().time()+self.batch_seconds
+                    while True:
+                        remaining=deadline-asyncio.get_running_loop().time()
+                        if remaining<=0:break
+                        try:next_item=await asyncio.wait_for(self.queue.get(),remaining)
+                        except asyncio.TimeoutError:break
+                        if next_item is None:
+                            self.queue.task_done();stop_after_batch=True;break
+                        batch.append(next_item)
+                self.context.extend(batch);before=self.graph
+                logger.info("Architecture transcript batch processing meeting_id=%s transcript_ids=%s sequences=%s base_version=%d",
+                            self.meeting_id,[entry.transcript_id for entry in batch],[entry.sequence for entry in batch],before.version)
                 policy={"default_backend_style":self.agent.policy.default_backend_style.value,
                         "default_sync_protocol":self.agent.policy.default_sync_protocol,
                         "allow_generic_async_infrastructure":self.agent.policy.allow_generic_async_infrastructure}
-                request=ArchitectureAgentRequest(meeting_id=self.meeting_id,graph=before,transcripts=list(self.context),new_transcript_ids=[item.transcript_id],policy=policy)
+                request=ArchitectureAgentRequest(meeting_id=self.meeting_id,graph=before,transcripts=list(self.context),
+                    new_transcript_ids=[entry.transcript_id for entry in batch],policy=policy)
                 result,after=await self.agent.analyze(request);self.graph=after
                 await self.callback(result,before,after)
             except Exception as exc:
@@ -546,3 +586,5 @@ class ArchitectureCoordinator:
                 if self.on_error and item is not None:await self.on_error(exc,item)
                 else:raise
             finally:self.queue.task_done()
+            for _ in batch[1:]:self.queue.task_done()
+            if stop_after_batch:return

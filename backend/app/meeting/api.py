@@ -30,6 +30,7 @@ from .architecture import EntityType
 from .providers import ProviderConfig, create_provider
 from .schema import AnalysisRequest, AnalysisResult, TranscriptSegment
 from .storage import MeetingStore
+from .firestore_mirror import FirestoreMirror
 from .stt import create_transcriber
 from .transcription import TranscriptionPipeline
 
@@ -41,7 +42,16 @@ router = APIRouter(tags=["meetings"])
 def configure_meetings(app) -> None:
     settings = MeetingSettings()
     app.state.meeting_settings = settings
-    app.state.meeting_store = MeetingStore(settings.database_path)
+    app.state.meeting_store = MeetingStore(
+        settings.database_path,
+        firestore=FirestoreMirror(
+            enabled=settings.firestore_enabled,
+            required=settings.firestore_required,
+            project_id=settings.firestore_project_id,
+            database=settings.firestore_database,
+            collection=settings.firestore_collection,
+        ),
+    )
 
     @app.on_event("startup")
     async def _meeting_startup() -> None:
@@ -87,6 +97,9 @@ def _provider_config(settings: MeetingSettings) -> ProviderConfig:
         retry_attempts=settings.intelligence_retry_attempts,
         ollama_num_ctx=settings.ollama_num_ctx,
         ollama_think=settings.ollama_think,
+        gemini_backend=settings.gemini_backend,
+        google_cloud_project=settings.firestore_project_id,
+        google_cloud_location=settings.google_cloud_location,
     )
 
 
@@ -100,7 +113,10 @@ def _correction_provider_config(settings: MeetingSettings) -> ProviderConfig:
         timeout_seconds=settings.intelligence_timeout_seconds,
         retry_attempts=settings.intelligence_retry_attempts,
         ollama_num_ctx=settings.ollama_num_ctx,
-        ollama_think=settings.ollama_think)
+        ollama_think=settings.ollama_think,
+        gemini_backend=settings.gemini_backend,
+        google_cloud_project=settings.firestore_project_id,
+        google_cloud_location=settings.google_cloud_location)
 
 
 def _semantic_operations(result: AnalysisResult) -> list[dict]:
@@ -159,10 +175,14 @@ async def meeting_health(request: Request) -> dict:
     return {
         "status": "ok",
         "stt_provider": settings.stt_provider,
+        "gemini_backend": settings.gemini_backend if settings.stt_provider == "gemini" else None,
+        "google_cloud_location": settings.google_cloud_location if settings.gemini_backend == "vertex" else None,
         "intelligence_enabled": settings.intelligence_enabled,
         "intelligence_provider": settings.intelligence_provider if settings.intelligence_enabled else None,
         "intelligence_model": settings.intelligence_model if settings.intelligence_enabled else None,
         "database": str(settings.database_path),
+        "firestore_enabled": settings.firestore_enabled,
+        "firestore_required": settings.firestore_required,
     }
 
 
@@ -205,7 +225,7 @@ async def meeting_audio(websocket: WebSocket, external_id: str) -> None:
         board_id = await _new_board(document_service, external_id)
         session_id = await store.create_meeting(
             external_id,
-            client_metadata=start,
+            client_metadata={**start, "board_id": board_id, "board_url": f"/d/{board_id}"},
             intelligence_provider=settings.intelligence_provider if settings.intelligence_enabled else None,
             intelligence_model=settings.intelligence_model if settings.intelligence_enabled else None,
         )
@@ -368,7 +388,8 @@ async def meeting_audio(websocket: WebSocket, external_id: str) -> None:
             )
             architecture = ArchitectureCoordinator(session_id,
                 StatefulArchitectureAgent(ArchitectureAgentProvider(_provider_config(settings)), architecture_policy),
-                initial_graph,on_architecture,on_error=on_architecture_error)
+                initial_graph,on_architecture,on_error=on_architecture_error,
+                batch_seconds=settings.intelligence_batch_seconds)
             await architecture.start()
             logger.info("Architecture agent v2 started session_id=%s provider=%s model=%s graph_version=%d",
                         session_id,settings.intelligence_provider,settings.intelligence_model,initial_graph.version)
